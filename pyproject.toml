@@ -1,0 +1,79 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "groundtruth"
+version = "1.0.0"
+description = "Ground Truth Analysis Tooling"
+authors = [
+    "Anna Liu <anna.liu@indicodata.ai>",
+    "Michael Welborn <michael.welborn@indicodata.ai>",
+    "Nate Shim <nate.shim@indicodata.ai>",
+    "Scott Levin <scott.levin@indicodata.ai>",
+]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiometer = "^0.4.0"
+indico-client = "^5.9.0"
+indico-toolkit = "^2.0.2"
+levenshtein = "^0.21.0"
+polars = "^0.17.12"
+rich = "^13.3.5"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.1.0"
+coverage = "^7.1.0"
+mypy = "^1.0.0"
+pandas-stubs = "^2.0.1.230501"
+poethepoet = "^0.18.1"
+pytest = "^7.2.1"
+pytest-asyncio = "^0.20.3"
+pytest-cov = "^4.0.0"
+ruff = "^0.0.243"
+
+[tool.poetry.scripts]
+groundtruth = "groundtruth.cli:main"
+
+[tool.poe.tasks]
+black = "black groundtruth scripts tests"
+coverage = "coverage html"
+mypy = "mypy groundtruth scripts tests"
+pytest = "pytest scripts tests --cov=groundtruth"
+ruff_check = "ruff groundtruth scripts tests"
+ruff_fix = "ruff --fix-only --exit-zero groundtruth scripts tests"
+
+format = ["ruff_fix", "black"]
+check = ["ruff_check", "mypy"]
+test = ["pytest", "coverage"]
+all = ["format", "check", "test"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I"]
+fixable = ["I"]
+
+[tool.mypy]
+strict = true
+show_error_codes = true
+warn_unreachable = true
+disallow_any_unimported = true
+
+[[tool.mypy.overrides]]
+module = "indico.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "@abstractmethod"]
