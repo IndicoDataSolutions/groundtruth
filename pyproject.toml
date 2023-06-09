@@ -16,7 +16,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 aiometer = "^0.4.0"
 indico-client = "^5.9.0"
 indico-toolkit = "^2.0.2"

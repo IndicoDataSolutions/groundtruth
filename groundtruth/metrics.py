@@ -1,14 +1,13 @@
+from __future__ import annotations
+
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeAlias
 
 import polars
 
 from .extractions import Extraction, read_extractions
 from .utils import group_by_attr
-
-TableRow: TypeAlias = dict[str, str | float | None]
 
 
 @dataclass
@@ -23,7 +22,9 @@ class Metric:
     value: float | None
 
     @staticmethod
-    def tabulate(metrics: Iterable["Metric"]) -> Iterator[TableRow]:
+    def tabulate(
+        metrics: Iterable["Metric"],
+    ) -> Iterator[dict[str, str | float | None]]:
         """
         Tabulate an iterable of Metrics into a dictionary structure suitable for a
         DataFrame CSV export.

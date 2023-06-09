@@ -2,7 +2,7 @@
 
 Ground Truth Analysis Tooling
 
-Requires Python ^3.10 and Poetry ^1.2
+Requires Python ^3.9 and Poetry ^1.2
 
 ``` shell
 $ poetry install
