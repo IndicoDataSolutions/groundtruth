@@ -30,7 +30,7 @@ groundtruth submit \
 ~~~
 
 At this point, all of the submissions listed in the `ground_truth_submission_ids.csv`
-Will be queued for processing. Once processed, they should all be manually reviewed to
+will be queued for processing. Once processed, they should all be manually reviewed to
 establish ground truth. After all reviews have been completed, the results can be
 downloaded using the `retrieve` command.
 
@@ -64,7 +64,7 @@ After manual review and correction, the extractions file can be analyzed using t
 `analyze` command to produce accuracy, volume, and STP performance metrics for a range
 of confidence thresholds. Any samples that should not be included in the analysis
 (such as ground truths with no value) should be filtered out of the extractions file
-prior to running it.
+prior to analyzing it.
 
 ~~~ shell
 groundtruth analyze \
@@ -73,10 +73,10 @@ groundtruth analyze \
     0.85 0.95 0.99 0.99999
 ~~~
 
-Additional rounds of ground truth analysis can be performed after model remediation or
-auto review enhancements have been made to determine the performance impact. Use the
-`submit`, `retrieve`, and `extract` commands to process the same folder of documents
-through the updated workflow, saving the results and IDs as a new set.
+Additional rounds of analysis can be performed after model remediation or auto review
+enhancements have been made to determine the performance impact. Use the `submit`,
+`retrieve`, and `extract` commands to process the same folder of documents through the
+updated workflow, saving the results and IDs as a new set.
 
 ~~~ shell
 groundtruth submit \
