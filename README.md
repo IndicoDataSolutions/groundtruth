@@ -42,17 +42,14 @@ groundtruth retrieve \
 ~~~
 
 These results contain the ground truths *and* predictions for the first round of ground
-truth analysis. Ground truths and prediction samples for specific model fields can be
+truth analysis. Ground truths and prediction samples for a specific model can be
 extracted from the results using the `extract` command.
 
 ~~~ shell
 groundtruth extract \
     --results-folder ground_truth_results \
     --extractions-file ground_truth_extractions.csv \
-    --model "Invoice Extraction Model" \
-    "Invoice ID" \
-    "Invoice Date" \
-    "Invoice Amount"
+    --model "Invoice Extraction Model"
 ~~~
 
 At this point, the ground truth/prediction samples in `ground_truth_extractions.csv`
@@ -99,10 +96,7 @@ groundtruth retrieve \
 groundtruth extract \
     --results-folder remediated_results \
     --extractions-file remediated_extractions.csv \
-    --model "Invoice Extraction Model" \
-    "Invoice ID" \
-    "Invoice Date" \
-    "Invoice Amount"
+    --model "Invoice Extraction Model"
 ~~~
 
 Note that the results and extractions will *not* contain ground truths, only remediated
