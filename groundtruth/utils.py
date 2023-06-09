@@ -3,6 +3,8 @@ import operator
 from collections.abc import Iterable
 from typing import TypeVar
 
+from pathvalidate import sanitize_filename
+
 Value = TypeVar("Value")
 
 
@@ -29,4 +31,13 @@ def group_by_attr(
             ),
             key=operator.attrgetter(attr_name),
         )
+    )
+
+
+def sanitize(file_name: str) -> str:
+    return sanitize_filename(
+        file_name,
+        max_len=None,
+        platform="auto",
+        replacement_text="_",
     )

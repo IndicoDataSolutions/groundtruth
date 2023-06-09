@@ -775,6 +775,20 @@ files = [
 ]
 
 [[package]]
+name = "pathvalidate"
+version = "3.0.0"
+description = "pathvalidate is a Python library to sanitize/validate a string such as filenames/file-paths/etc."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pathvalidate-3.0.0-py3-none-any.whl", hash = "sha256:dcdb89f0bde6fd5eba6f2202a7863f657afbc810ef32f60e9258d58ede8155ac"},
+    {file = "pathvalidate-3.0.0.tar.gz", hash = "sha256:cfca1886f3cd8862b10bce18a87f4dc02d6418399e539ede2b010dc8588991ce"},
+]
+
+[package.extras]
+test = ["Faker (>=1.0.8)", "allpairspy (>=2)", "click (>=6.2)", "pytest (>=6.0.1)", "pytest-discord (>=0.1.2)", "pytest-md-report (>=0.3)"]
+
+[[package]]
 name = "pillow"
 version = "9.5.0"
 description = "Python Imaging Library (Fork)"
@@ -1352,4 +1366,4 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "37d376a8b68abe710732a6ba503e1a3cd8463a963ad82eac9bcacb0217d1dce4"
+content-hash = "ab07758e36a07a74ff9756dd91986cf97a908ba1bd78f954373a99262507f737"

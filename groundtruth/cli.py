@@ -57,6 +57,7 @@ def submit(args: argparse.Namespace) -> None:
     import rich.progress
 
     from . import workflows
+    from .utils import sanitize
 
     document_files = tuple(args.documents_folder.glob("*"))
     tracked_document_files = rich.progress.track(
@@ -71,7 +72,7 @@ def submit(args: argparse.Namespace) -> None:
     polars.DataFrame(
         {
             "submission_id": submission_id,
-            "file_name": document_file.name,
+            "file_name": sanitize(document_file.name),
             "review_url": f"https://{args.host}/review/queues/{args.workflow_id}/submission/{submission_id}",  # noqa: E501
         }
         for submission_id, document_file in zip(submission_ids, document_files)

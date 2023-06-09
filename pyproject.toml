@@ -21,6 +21,7 @@ aiometer = "^0.4.0"
 indico-client = "^5.9.0"
 indico-toolkit = "^2.0.2"
 levenshtein = "^0.21.0"
+pathvalidate = "^3.0.0"
 polars = "^0.17.12"
 rich = "^13.3.5"
 
