@@ -41,14 +41,15 @@ groundtruth = "groundtruth.cli:main"
 
 [tool.poe.tasks]
 black = "black groundtruth scripts tests"
+black_check = "black --check groundtruth scripts tests"
 coverage = "coverage html"
 mypy = "mypy groundtruth scripts tests"
 pytest = "pytest scripts tests --cov=groundtruth"
-ruff_check = "ruff groundtruth scripts tests"
+ruff = "ruff groundtruth scripts tests"
 ruff_fix = "ruff --fix-only --exit-zero groundtruth scripts tests"
 
 format = ["ruff_fix", "black"]
-check = ["ruff_check", "mypy"]
+check = ["ruff", "mypy"]
 test = ["pytest", "coverage"]
 all = ["format", "check", "test"]
 
