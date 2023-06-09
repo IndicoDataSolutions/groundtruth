@@ -79,7 +79,7 @@ def normalize(value: str | None) -> str:
     distance and similarity.
     """
     value = value or ""
-    value = value.lower()
+    value = value.casefold()
     value = value.strip()
     value = re.sub(r"\s+", " ", value)
     return value
