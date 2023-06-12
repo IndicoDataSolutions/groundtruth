@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from groundtruth.extractions import (
     Extraction,
     combine_extractions_by_file_name,

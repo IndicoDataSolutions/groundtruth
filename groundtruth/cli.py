@@ -57,6 +57,7 @@ def submit(args: argparse.Namespace) -> None:
     import rich.progress
 
     from . import workflows
+    from .utils import sanitize
 
     document_files = tuple(args.documents_folder.glob("*"))
     tracked_document_files = rich.progress.track(
@@ -71,7 +72,7 @@ def submit(args: argparse.Namespace) -> None:
     polars.DataFrame(
         {
             "submission_id": submission_id,
-            "file_name": document_file.name,
+            "file_name": sanitize(document_file.name),
             "review_url": f"https://{args.host}/review/queues/{args.workflow_id}/submission/{submission_id}",  # noqa: E501
         }
         for submission_id, document_file in zip(submission_ids, document_files)
@@ -143,8 +144,11 @@ def add_extract_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "fields",
-        nargs="+",
-        help="Fields to extract ground truths and predictions for",
+        nargs="*",
+        help=(
+            "Fields to extract ground truths and predictions for "
+            "(defaults to all fields)"
+        ),
     )
     parser.set_defaults(command=extract)
 
@@ -155,6 +159,15 @@ def extract(args: argparse.Namespace) -> None:
     from . import extractions
 
     result_files = tuple(args.results_folder.glob("*.json"))
+
+    if not args.fields:
+        tracked_result_files = rich.progress.track(
+            result_files, description="Discovering Fields...", auto_refresh=False
+        )
+        args.fields = extractions.all_fields_in_results(
+            result_files=tracked_result_files, model=args.model
+        )
+
     tracked_result_files = rich.progress.track(
         result_files, description="Extracting...", auto_refresh=False
     )

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from groundtruth.extractions import Extraction
 from groundtruth.metrics import (
     ConfusionMatrix,

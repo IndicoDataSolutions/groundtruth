@@ -2,7 +2,7 @@
 
 Ground Truth Analysis Tooling
 
-Requires Python ^3.10 and Poetry ^1.2
+Requires Python ^3.9 and Poetry ^1.2
 
 ``` shell
 $ poetry install
@@ -30,7 +30,7 @@ groundtruth submit \
 ~~~
 
 At this point, all of the submissions listed in the `ground_truth_submission_ids.csv`
-Will be queued for processing. Once processed, they should all be manually reviewed to
+will be queued for processing. Once processed, they should all be manually reviewed to
 establish ground truth. After all reviews have been completed, the results can be
 downloaded using the `retrieve` command.
 
@@ -42,17 +42,14 @@ groundtruth retrieve \
 ~~~
 
 These results contain the ground truths *and* predictions for the first round of ground
-truth analysis. Ground truths and prediction samples for specific model fields can be
+truth analysis. Ground truths and prediction samples for a specific model can be
 extracted from the results using the `extract` command.
 
 ~~~ shell
 groundtruth extract \
     --results-folder ground_truth_results \
     --extractions-file ground_truth_extractions.csv \
-    --model "Invoice Extraction Model" \
-    "Invoice ID" \
-    "Invoice Date" \
-    "Invoice Amount"
+    --model "Invoice Extraction Model"
 ~~~
 
 At this point, the ground truth/prediction samples in `ground_truth_extractions.csv`
@@ -67,7 +64,7 @@ After manual review and correction, the extractions file can be analyzed using t
 `analyze` command to produce accuracy, volume, and STP performance metrics for a range
 of confidence thresholds. Any samples that should not be included in the analysis
 (such as ground truths with no value) should be filtered out of the extractions file
-prior to running it.
+prior to analyzing it.
 
 ~~~ shell
 groundtruth analyze \
@@ -76,10 +73,10 @@ groundtruth analyze \
     0.85 0.95 0.99 0.99999
 ~~~
 
-Additional rounds of ground truth analysis can be performed after model remediation or
-auto review enhancements have been made to determine the performance impact. Use the
-`submit`, `retrieve`, and `extract` commands to process the same folder of documents
-through the updated workflow, saving the results and IDs as a new set.
+Additional rounds of analysis can be performed after model remediation or auto review
+enhancements have been made to determine the performance impact. Use the `submit`,
+`retrieve`, and `extract` commands to process the same folder of documents through the
+updated workflow, saving the results and IDs as a new set.
 
 ~~~ shell
 groundtruth submit \
@@ -99,10 +96,7 @@ groundtruth retrieve \
 groundtruth extract \
     --results-folder remediated_results \
     --extractions-file remediated_extractions.csv \
-    --model "Invoice Extraction Model" \
-    "Invoice ID" \
-    "Invoice Date" \
-    "Invoice Amount"
+    --model "Invoice Extraction Model"
 ~~~
 
 Note that the results and extractions will *not* contain ground truths, only remediated

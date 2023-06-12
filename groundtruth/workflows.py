@@ -11,6 +11,8 @@ from indico.queries import (
     WorkflowSubmission,
 )
 
+from .utils import sanitize
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +52,7 @@ def retrieve_results(
         submission_result = client.call(SubmissionResult(submission, wait=True))
         result = client.call(RetrieveStorageObject(submission_result.result))
 
-        result_file = Path(submission.input_filename).with_suffix(".json")
+        sanitized_file_name = sanitize(submission.input_filename)
+        result_file = Path(sanitized_file_name).with_suffix(".json")
         result_file = results_folder / result_file
         result_file.write_text(json.dumps(result))

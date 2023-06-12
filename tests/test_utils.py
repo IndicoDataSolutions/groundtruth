@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from groundtruth.utils import group_by_attr
+from groundtruth.utils import group_by_attr, sanitize
 
 
 @dataclass
@@ -25,3 +25,7 @@ def test_group_by_attr() -> None:
     )
 
     assert group_by_attr(values, "name") == groups
+
+
+def test_sanitize() -> None:
+    assert sanitize("06/09/2023.json") == "06_09_2023.json"

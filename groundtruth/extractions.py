@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import json
 import logging
@@ -77,10 +79,44 @@ def normalize(value: str | None) -> str:
     distance and similarity.
     """
     value = value or ""
-    value = value.lower()
+    value = value.casefold()
     value = value.strip()
     value = re.sub(r"\s+", " ", value)
     return value
+
+
+def all_fields_in_results(
+    result_files: Iterable[Path],
+    model: str,
+) -> set[str]:
+    all_fields = set()
+
+    for result_file_name, result in read_results(result_files):
+        try:
+            document_dict = result["results"]["document"]
+            model_dict = document_dict["results"][model]
+            post_reviews = model_dict["post_reviews"]
+            auto_review = post_reviews[-1]
+        except (IndexError, KeyError, TypeError):
+            logger.warning(
+                f"Result '{result_file_name}' does not contain an auto review for "
+                f"model '{model}'."
+            )
+            raise
+
+        try:
+            hitl_review = post_reviews[-2]
+        except IndexError:
+            logger.warning(
+                f"Result '{result_file_name}' does not contain a HITL review for "
+                f"model '{model}'."
+            )
+            hitl_review = []
+
+        for prediction in auto_review + hitl_review:
+            all_fields.add(prediction["label"])
+
+    return all_fields
 
 
 def results_to_csv(
