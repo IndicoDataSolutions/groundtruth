@@ -10,6 +10,10 @@ $ poetry run poe {format,check,test,all}
 $ poetry run groundtruth --help
 ```
 
+**CAVEATS:**
+- This program requires Auto Review to be enabled for the workflow/submissions.
+- This program only considers the first ground truth/prediction value for each field.
+
 ## Analysis Process
 
 `groundtruth` is used to aid the ground truth analysis process for a model or workflow.
