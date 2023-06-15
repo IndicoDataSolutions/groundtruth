@@ -97,7 +97,8 @@ def all_fields_in_results(
             model_dict = document_dict["results"][model]
             post_reviews = model_dict["post_reviews"]
             auto_review = post_reviews[-1]
-        except (IndexError, KeyError, TypeError):
+            assert auto_review is not None  # Rejected in review
+        except (AssertionError, IndexError, KeyError, TypeError):
             logger.warning(
                 f"Result '{result_file_name}' does not contain an auto review for "
                 f"model '{model}'."
@@ -106,7 +107,8 @@ def all_fields_in_results(
 
         try:
             hitl_review = post_reviews[-2]
-        except IndexError:
+            assert hitl_review is not None  # Rejected in review
+        except (AssertionError, IndexError):
             logger.warning(
                 f"Result '{result_file_name}' does not contain a HITL review for "
                 f"model '{model}'."
@@ -163,7 +165,8 @@ def extractions_for_result(
         model_dict = document_dict["results"][model]
         post_reviews = model_dict["post_reviews"]
         auto_review = post_reviews[-1]
-    except (IndexError, KeyError, TypeError):
+        assert auto_review is not None  # Rejected in review
+    except (AssertionError, IndexError, KeyError, TypeError):
         logger.warning(
             f"Result '{result_file_name}' does not contain an auto review for model "
             f"'{model}'. Skipping."
@@ -172,7 +175,8 @@ def extractions_for_result(
 
     try:
         hitl_review = post_reviews[-2]
-    except IndexError:
+        assert hitl_review is not None  # Rejected in review
+    except (AssertionError, IndexError):
         logger.warning(
             f"Result '{result_file_name}' does not contain a HITL review for model "
             f"'{model}'. Missing ground truth."
