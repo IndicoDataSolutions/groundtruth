@@ -11,6 +11,9 @@ $ poetry run groundtruth --help
 ```
 
 **CAVEATS:**
+- This program only works with extraction models.
+- This program requires results to be in file version 1 format.
+- This program does not work with bundled submissions or unbundling workflows.
 - This program requires Auto Review to be enabled for the workflow/submissions.
 - This program only considers the first ground truth/prediction value for each field.
 
