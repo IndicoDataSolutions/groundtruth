@@ -10,8 +10,8 @@ from groundtruth.extractions import (
 def default_extraction(
     file_name: str = "",
     field: str = "",
-    ground_truth_id: int = 0,
-    prediction_id: int = 0,
+    ground_truth_id: int | None = None,
+    prediction_id: int | None = None,
     ground_truth: str | None = None,
     prediction: str | None = None,
     confidence: float | None = None,
@@ -123,8 +123,8 @@ def test_extract() -> None:
     ]
     predictions = [
         {"label": "Alpha", "text": "Tres", "confidence": {"Alpha": 1.0}},
-        {"label": "Bravo", "text": "Duodenum", "confidence": {"Bravo": 0.9}},
         {"label": "Bravo", "text": "Unus", "confidence": {"Bravo": 0.8}},
+        {"label": "Bravo", "text": "Duodenum", "confidence": {"Bravo": 0.9}},
         {"label": "Charlie", "text": "Nehil", "confidence": {"Charlie": 0.7}},
         {"label": "Charlie", "text": "Nehil", "confidence": {"Charlie": 0.6}},
         {"label": "Charlie", "text": "Nehil", "confidence": {"Charlie": 0.5}},
@@ -150,12 +150,13 @@ def test_extract() -> None:
         )
     ]
 
-    alpha_extraction, bravo_extraction = list(
+    alpha_extraction, bravo_extraction, bravo_2_extraction = list(
         extractions_for_results(results_and_names, model_name, fields)
     )
 
     assert alpha_extraction.true_positive is True
     assert bravo_extraction.false_positive is True
+    assert bravo_2_extraction.true_positive is True
 
 
 def test_combine() -> None:
@@ -169,51 +170,120 @@ def test_combine() -> None:
         default_extraction(
             file_name="alpha.json",
             field="Charlie",
-            ground_truth_id=123,
+            ground_truth_id=234,
             ground_truth="Charlie GT",
+        ),
+        default_extraction(
+            file_name="alpha.json",
+            field="Bravo",
+            ground_truth_id=345,
+            ground_truth="Another Bravo GT",
         ),
         default_extraction(
             file_name="delta.json",
             field="Bravo",
-            ground_truth_id=123,
+            ground_truth_id=987,
             ground_truth="Bravo GT",
-        ),
-        default_extraction(
-            file_name="delta.json",
-            field="Charlie",
-            ground_truth_id=123,
-            ground_truth="Charlie GT",
         ),
     ]
     prediction_extractions = [
         default_extraction(
-            file_name="delta.json",
+            file_name="alpha.json",
             field="Bravo",
             prediction_id=456,
             prediction="Bravo Prediction",
+            confidence=0.4,
+        ),
+        default_extraction(
+            file_name="alpha.json",
+            field="Charlie",
+            prediction_id=567,
+            prediction="Charlie Prediction",
             confidence=0.5,
-        )
+        ),
+        default_extraction(
+            file_name="alpha.json",
+            field="Charlie",
+            prediction_id=678,
+            prediction="Another Charlie Prediction",
+            confidence=0.6,
+        ),
+        default_extraction(
+            file_name="delta.json",
+            field="Bravo",
+            prediction_id=654,
+            prediction="Charlie Prediction",
+            confidence=0.6,
+        ),
     ]
     combined_extractions = [
         default_extraction(
-            file_name="delta.json",
+            file_name="alpha.json",
             field="Bravo",
             ground_truth_id=123,
             ground_truth="Bravo GT",
             prediction_id=456,
             prediction="Bravo Prediction",
-            confidence=0.5,
+            confidence=0.4,
             edit_distance=9,
             similarity=0.5833333333333333,
             accurate=False,
-        )
+        ),
+        default_extraction(
+            file_name="alpha.json",
+            field="Charlie",
+            ground_truth_id=234,
+            ground_truth="Charlie GT",
+            prediction_id=567,
+            prediction="Charlie Prediction",
+            confidence=0.5,
+            edit_distance=9,
+            similarity=0.6428571428571428,
+            accurate=False,
+        ),
+        default_extraction(
+            file_name="alpha.json",
+            field="Bravo",
+            ground_truth_id=345,
+            ground_truth="Another Bravo GT",
+            edit_distance=16,
+            similarity=0.0,
+            accurate=False,
+        ),
+        default_extraction(
+            file_name="delta.json",
+            field="Bravo",
+            ground_truth_id=987,
+            ground_truth="Bravo GT",
+            prediction_id=654,
+            prediction="Charlie Prediction",
+            confidence=0.6,
+            edit_distance=15,
+            similarity=0.23076923076923073,
+            accurate=False,
+        ),
+        default_extraction(
+            file_name="alpha.json",
+            field="Charlie",
+            prediction_id=678,
+            prediction="Another Charlie Prediction",
+            confidence=0.6,
+            edit_distance=26,
+            similarity=0.0,
+            accurate=False,
+        ),
     ]
 
     assert (
-        list(
+        sorted(
             combine_extractions_by_file_name(
                 ground_truth_extractions, prediction_extractions
-            )
+            ),
+            key=lambda value: str(value.ground_truth_id) + str(value.prediction_id),
         )
         == combined_extractions
     )
+
+
+def test_mutliple_values() -> None:
+    pass

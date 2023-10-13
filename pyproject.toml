@@ -21,6 +21,7 @@ aiometer = "^0.4.0"
 indico-client = "^5.9.0"
 indico-toolkit = "^2.0.2"
 levenshtein = "^0.21.0"
+munkres = "^1.1.4"
 pathvalidate = "^3.0.0"
 polars = "^0.17.12"
 rich = "^13.3.5"
@@ -69,6 +70,10 @@ disallow_any_unimported = true
 
 [[tool.mypy.overrides]]
 module = "indico.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "munkres.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
