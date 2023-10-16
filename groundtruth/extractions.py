@@ -13,6 +13,8 @@ from typing import Any
 import polars
 from Levenshtein import distance, ratio
 
+from .utils import zip_match_longest
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +26,8 @@ class Extraction:
 
     file_name: str
     field: str
-    ground_truth_id: int
-    prediction_id: int
+    ground_truth_id: int | None
+    prediction_id: int | None
     ground_truth: str | None
     prediction: str | None
     confidence: float | None
@@ -53,8 +55,8 @@ class Extraction:
     def from_values(
         file_name: str,
         field: str,
-        ground_truth_id: int,
-        prediction_id: int,
+        ground_truth_id: int | None,
+        prediction_id: int | None,
         ground_truth: str | None,
         prediction: str | None,
         confidence: float | None,
@@ -183,8 +185,8 @@ def extractions_for_result(
         )
         hitl_review = []
 
-    ground_truths_by_field: defaultdict[str, list[Any]] = defaultdict(list)
-    predictions_by_field: defaultdict[str, list[Any]] = defaultdict(list)
+    ground_truths_by_field: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+    predictions_by_field: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
 
     for ground_truth in hitl_review:
         ground_truths_by_field[ground_truth["label"]].append(ground_truth)
@@ -193,31 +195,26 @@ def extractions_for_result(
         predictions_by_field[prediction["label"]].append(prediction)
 
     for field in fields:
-        ground_truths = ground_truths_by_field[field]
-        predictions = predictions_by_field[field]
-
-        if len(ground_truths) > 1 or len(predictions) > 1:
-            logger.warning(
-                f"Result '{result_file_name}' contains multiple ground "
-                f"truths/predictions for field '{field}'. "
-                "Discarding all but the first."
+        for ground_truth_dict, prediction_dict in zip_match_longest(
+            left=ground_truths_by_field[field],
+            right=predictions_by_field[field],
+            left_key=lambda value: value["text"],  # type: ignore[no-any-return]
+            right_key=lambda value: value["text"],  # type: ignore[no-any-return]
+        ):
+            ground_truth = ground_truth_dict["text"] if ground_truth_dict else None
+            prediction = prediction_dict["text"] if prediction_dict else None
+            confidence = (
+                prediction_dict["confidence"][field] if prediction_dict else None
             )
-
-        ground_truth_dict = ground_truths[0] if ground_truths else None
-        prediction_dict = predictions[0] if predictions else None
-        ground_truth = ground_truth_dict["text"] if ground_truth_dict else None
-        prediction = prediction_dict["text"] if prediction_dict else None
-        confidence = prediction_dict["confidence"][field] if prediction_dict else None
-
-        yield Extraction.from_values(
-            file_name=result_file_name,
-            field=field,
-            ground_truth_id=submission_id,
-            prediction_id=submission_id,
-            ground_truth=ground_truth,
-            prediction=prediction,
-            confidence=confidence,
-        )
+            yield Extraction.from_values(
+                file_name=result_file_name,
+                field=field,
+                ground_truth_id=submission_id,
+                prediction_id=submission_id,
+                ground_truth=ground_truth,
+                prediction=prediction,
+                confidence=confidence,
+            )
 
 
 def write_extractions(
@@ -265,8 +262,6 @@ def combine_extractions_by_file_name(
 ) -> Iterator[Extraction]:
     """
     Combine ground truth and prediction extractions by file name and field.
-    The combination will only contain extractions for files and fields present in
-    the predictions.
     """
     ground_truths_by_file_name: defaultdict[str, list[Extraction]] = defaultdict(list)
     predictions_by_file_name: defaultdict[str, list[Extraction]] = defaultdict(list)
@@ -277,7 +272,10 @@ def combine_extractions_by_file_name(
     for extraction in prediction_extractions:
         predictions_by_file_name[extraction.file_name].append(extraction)
 
-    for file_name in predictions_by_file_name.keys():
+    gt_file_names = ground_truths_by_file_name.keys()
+    pred_file_names = predictions_by_file_name.keys()
+
+    for file_name in set(gt_file_names) | set(pred_file_names):
         yield from combine_extractions_by_field(
             ground_truths_by_file_name[file_name], predictions_by_file_name[file_name]
         )
@@ -289,7 +287,6 @@ def combine_extractions_by_field(
 ) -> Iterator[Extraction]:
     """
     Combine ground truth and prediction extractions by field.
-    The combination will only contain extractions for fields present in predictions.
     """
     ground_truths_by_field: defaultdict[str, list[Extraction]] = defaultdict(list)
     predictions_by_field: defaultdict[str, list[Extraction]] = defaultdict(list)
@@ -300,26 +297,45 @@ def combine_extractions_by_field(
     for extraction in prediction_extractions:
         predictions_by_field[extraction.field].append(extraction)
 
-    for field in predictions_by_field.keys():
-        ground_truth_extractions = ground_truths_by_field[field]
-        prediction_extractions = predictions_by_field[field]
-
-        ground_truth_extraction = ground_truth_extractions[0]
-        prediction_extraction = prediction_extractions[0]
-
-        if len(ground_truth_extractions) > 1 or len(prediction_extractions) > 1:
-            logger.warning(
-                f"Result '{prediction_extraction.file_name}' contains multiple ground "
-                f"truths/predictions for field '{field}'. "
-                "All but the first were discarded."
-            )
-
-        yield Extraction.from_values(
-            file_name=prediction_extraction.file_name,
-            field=field,
-            ground_truth_id=ground_truth_extraction.ground_truth_id,
-            prediction_id=prediction_extraction.prediction_id,
-            ground_truth=ground_truth_extraction.ground_truth,
-            prediction=prediction_extraction.prediction,
-            confidence=prediction_extraction.confidence,
-        )
+    for field in set(ground_truths_by_field.keys()) | set(predictions_by_field.keys()):
+        for ground_truth_extraction, prediction_extraction in zip_match_longest(
+            left=ground_truths_by_field[field],
+            right=predictions_by_field[field],
+            left_key=lambda value: value.ground_truth,
+            right_key=lambda value: value.prediction,
+        ):
+            if ground_truth_extraction and prediction_extraction:
+                yield Extraction.from_values(
+                    file_name=prediction_extraction.file_name,
+                    field=field,
+                    ground_truth_id=ground_truth_extraction.ground_truth_id,
+                    prediction_id=prediction_extraction.prediction_id,
+                    ground_truth=ground_truth_extraction.ground_truth,
+                    prediction=prediction_extraction.prediction,
+                    confidence=prediction_extraction.confidence,
+                )
+            elif ground_truth_extraction:
+                yield Extraction.from_values(
+                    file_name=ground_truth_extraction.file_name,
+                    field=field,
+                    ground_truth_id=ground_truth_extraction.ground_truth_id,
+                    prediction_id=None,
+                    ground_truth=ground_truth_extraction.ground_truth,
+                    prediction=None,
+                    confidence=None,
+                )
+            elif prediction_extraction:
+                yield Extraction.from_values(
+                    file_name=prediction_extraction.file_name,
+                    field=field,
+                    ground_truth_id=None,
+                    prediction_id=prediction_extraction.prediction_id,
+                    ground_truth=None,
+                    prediction=prediction_extraction.prediction,
+                    confidence=prediction_extraction.confidence,
+                )
+            else:
+                logger.error(
+                    "Matched ground truth and prediction pair were both `None` for "
+                    f"field '{field}'. This shouldn't be able to happen."
+                )
