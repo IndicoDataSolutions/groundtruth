@@ -69,6 +69,10 @@ def zip_match_longest(
     """
     left, right = list(left), list(right)
     max_len = max(len(left), len(right))
+
+    if max_len == 0:
+        return
+
     left += [None] * (max_len - len(left))
     right += [None] * (max_len - len(right))
 

@@ -93,3 +93,10 @@ class TestZipMatchLongest:
             ("Charlie", "Chorlie"),
             ("Delta", "Dorlta"),
         ]
+
+    @staticmethod
+    def test_zero() -> None:
+        left: list[str] = []
+        right: list[str] = []
+
+        assert list(zip_match_longest(left, right)) == []
