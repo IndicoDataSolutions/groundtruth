@@ -71,7 +71,7 @@ class Extraction:
             confidence=confidence,
             edit_distance=distance(normalize(ground_truth), normalize(prediction)),
             similarity=ratio(normalize(ground_truth), normalize(prediction)),
-            accurate=ground_truth == prediction,
+            accurate=normalize(ground_truth) == normalize(prediction),
         )
 
 
