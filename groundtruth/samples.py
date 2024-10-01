@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import dataclasses
-import json
 import logging
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import polars
 from Levenshtein import distance, ratio
 
+from . import results
+from .results import Extraction, Result
 from .utils import zip_match_longest
 
 logger = logging.getLogger(__name__)
@@ -96,17 +96,17 @@ def results_to_csv(result_files: Iterable[Path], samples_file: Path) -> None:
     write_samples(samples, samples_file)
 
 
-def read_results(result_files: Iterable[Path]) -> Iterator[tuple[str, Any]]:
+def read_results(result_files: Iterable[Path]) -> Iterator[tuple[str, Result]]:
     """
     Yield file names and parsed results from JSONs.
     """
     for result_file in result_files:
-        result = json.loads(result_file.read_text())
+        result = results.load(result_file)
         yield result_file.name, result
 
 
 def samples_for_results(
-    results_and_names: Iterable[tuple[str, Any]]
+    results_and_names: Iterable[tuple[str, Result]]
 ) -> Iterator[Sample]:
     """
     Yield ground truth/prediction samples for all models and fields.
@@ -114,67 +114,51 @@ def samples_for_results(
     ground truth.
     """
     for result_file_name, result in results_and_names:
-        for model in result["results"]["document"]["results"]:
-            yield from samples_for_result(result_file_name, result, model)
+        yield from samples_for_result(result_file_name, result)
 
 
-def samples_for_result(
-    result_file_name: str, result: Any, model: str
-) -> Iterator[Sample]:
-    try:
-        submission_id = result["submission_id"]
-        document_dict = result["results"]["document"]
-        model_dict = document_dict["results"][model]
-        post_reviews = model_dict["post_reviews"]
-        auto_review = post_reviews[-1]
-        assert auto_review is not None  # Rejected in review
-    except (AssertionError, IndexError, KeyError, TypeError):
+def samples_for_result(result_file_name: str, result: Result) -> Iterator[Sample]:
+    if not result.auto_review:
         logger.warning(
-            f"Result '{result_file_name}' does not contain an auto review for model "
-            f"'{model}'. Skipping."
+            f"Result '{result_file_name}' does not contain an auto review. Skipping."
         )
         return
 
-    try:
-        hitl_review = post_reviews[-2]
-        assert hitl_review is not None  # Rejected in review
-    except (AssertionError, IndexError):
+    if not result.manual_review:
         logger.warning(
-            f"Result '{result_file_name}' does not contain a HITL review for model "
-            f"'{model}'. Missing ground truth."
+            f"Result '{result_file_name}' does not contain an HITL review. "
+            "Will lack ground truth."
         )
-        hitl_review = []
 
-    ground_truths_by_field: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
-    predictions_by_field: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+    ground_truths_by_field: defaultdict[str, list[Extraction]] = defaultdict(list)
+    predictions_by_field: defaultdict[str, list[Extraction]] = defaultdict(list)
 
-    for ground_truth in hitl_review:
-        ground_truths_by_field[ground_truth["label"]].append(ground_truth)
+    for prediction in result.auto_review.extractions.where(rejected=False):
+        predictions_by_field[prediction.label].append(prediction)
 
-    for prediction in auto_review:
-        predictions_by_field[prediction["label"]].append(prediction)
+    for ground_truth in result.manual_review.extractions.where(rejected=False):
+        ground_truths_by_field[ground_truth.label].append(ground_truth)
 
     fields = set(ground_truths_by_field.keys()) | set(predictions_by_field.keys())
 
     for field in sorted(fields):
-        for ground_truth_dict, prediction_dict in zip_match_longest(
+        for ground_truth, prediction in zip_match_longest(  # type: ignore[assignment]
             left=ground_truths_by_field[field],
             right=predictions_by_field[field],
-            left_key=lambda value: value["text"],
-            right_key=lambda value: value["text"],
+            left_key=lambda value: value.text,
+            right_key=lambda value: value.text,
         ):
-            ground_truth = ground_truth_dict["text"] if ground_truth_dict else None
-            prediction = prediction_dict["text"] if prediction_dict else None
-            confidence = (
-                prediction_dict["confidence"][field] if prediction_dict else None
-            )
+            ground_truth_text = ground_truth.text if ground_truth else None
+            prediction_text = prediction.text if prediction else None
+            confidence = prediction.confidence if prediction else None
+
             yield Sample.from_values(
                 file_name=result_file_name,
                 field=field,
-                ground_truth_id=submission_id,
-                prediction_id=submission_id,
-                ground_truth=ground_truth,
-                prediction=prediction,
+                ground_truth_id=result.submission_id,
+                prediction_id=result.submission_id,
+                ground_truth=ground_truth_text,
+                prediction=prediction_text,
                 confidence=confidence,
             )
 

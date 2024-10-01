@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from groundtruth.results import (
+    DocumentExtraction,
+    PredictionList,
+    Result,
+    Review,
+    ReviewType,
+)
 from groundtruth.samples import (
     Sample,
     combine_samples_by_file_name,
@@ -110,37 +117,83 @@ class TestSample:
         assert sample.accurate is False
 
 
+def default_extraction(
+    label: str,
+    text: str,
+    review: Review | None = None,
+    confidence: float = 0,
+) -> DocumentExtraction:
+    return DocumentExtraction(
+        document=None,  # type: ignore[arg-type]
+        model=None,  # type: ignore[arg-type]
+        review=review,
+        label=label,
+        confidences={label: confidence},
+        text=text,
+        accepted=False,
+        rejected=False,
+        page=0,
+        start=0,
+        end=0,
+        groups=set(),
+        extras={},
+    )
+
+
 def test_sample() -> None:
-    ground_truths = [
-        {"label": "Alpha", "text": "Tres"},
-        {"label": "Bravo", "text": "Duo"},
-        {"label": "Bravo", "text": "Unus"},
-    ]
-    predictions = [
-        {"label": "Alpha", "text": "Tres", "confidence": {"Alpha": 1.0}},
-        {"label": "Bravo", "text": "Unus", "confidence": {"Bravo": 0.8}},
-        {"label": "Bravo", "text": "Duodenum", "confidence": {"Bravo": 0.9}},
-    ]
-    results_and_names = [
-        (
-            "abc.json",
-            {
-                "submission_id": 123,
-                "results": {
-                    "document": {
-                        "results": {
-                            "Test Model": {
-                                "post_reviews": [
-                                    ground_truths,
-                                    predictions,
-                                ]
-                            }
-                        }
-                    }
-                },
-            },
-        )
-    ]
+    auto_review = Review(
+        id=None, reviewer_id=None, notes=None, rejected=False, type=ReviewType.AUTO  # type: ignore[arg-type]
+    )
+    manual_review = Review(
+        id=None, reviewer_id=None, notes=None, rejected=False, type=ReviewType.MANUAL  # type: ignore[arg-type]
+    )
+
+    result = Result(
+        version=1,
+        submission_id=123,
+        documents=[],
+        models=[],
+        predictions=PredictionList(
+            (
+                default_extraction(
+                    label="Alpha",
+                    text="Tres",
+                    confidence=1.0,
+                    review=auto_review,
+                ),
+                default_extraction(
+                    label="Bravo",
+                    text="Unus",
+                    confidence=0.8,
+                    review=auto_review,
+                ),
+                default_extraction(
+                    label="Bravo",
+                    text="Duodenum",
+                    confidence=0.9,
+                    review=auto_review,
+                ),
+                default_extraction(
+                    label="Alpha",
+                    text="Tres",
+                    review=manual_review,
+                ),
+                default_extraction(
+                    label="Bravo",
+                    text="Duo",
+                    review=manual_review,
+                ),
+                default_extraction(
+                    label="Bravo",
+                    text="Unus",
+                    review=manual_review,
+                ),
+            )
+        ),
+        reviews=[auto_review, manual_review],
+    )
+
+    results_and_names = [("abc.json", result)]
 
     alpha_sample, bravo_sample, bravo_2_sample = list(
         samples_for_results(results_and_names)
