@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from groundtruth.extractions import (
-    Extraction,
-    combine_extractions_by_file_name,
-    extractions_for_results,
+from groundtruth.samples import (
+    Sample,
+    combine_samples_by_file_name,
+    samples_for_results,
 )
 
 
-def default_extraction(
+def default_sample(
     file_name: str = "",
     field: str = "",
     ground_truth_id: int | None = None,
@@ -18,8 +18,8 @@ def default_extraction(
     edit_distance: int = 0,
     similarity: float = 0,
     accurate: bool = False,
-) -> Extraction:
-    return Extraction(
+) -> Sample:
+    return Sample(
         file_name=file_name,
         field=field,
         ground_truth_id=ground_truth_id,
@@ -33,62 +33,62 @@ def default_extraction(
     )
 
 
-class TestExtraction:
+class TestSample:
     @staticmethod
     def test_true_positive() -> None:
-        extraction = default_extraction(
+        sample = default_sample(
             ground_truth="True Positive",
             prediction="True Positive",
             accurate=True,
         )
 
-        assert extraction.true_positive is True
-        assert extraction.false_negative is False
-        assert extraction.false_positive is False
-        assert extraction.true_negative is False
+        assert sample.true_positive is True
+        assert sample.false_negative is False
+        assert sample.false_positive is False
+        assert sample.true_negative is False
 
     @staticmethod
     def test_false_negative() -> None:
-        extraction = default_extraction(
+        sample = default_sample(
             ground_truth="False Negative",
             prediction=None,
             accurate=False,
         )
 
-        assert extraction.true_positive is False
-        assert extraction.false_negative is True
-        assert extraction.false_positive is False
-        assert extraction.true_negative is False
+        assert sample.true_positive is False
+        assert sample.false_negative is True
+        assert sample.false_positive is False
+        assert sample.true_negative is False
 
     @staticmethod
     def test_false_positive() -> None:
-        extraction = default_extraction(
+        sample = default_sample(
             ground_truth=None,
             prediction="False Positive",
             accurate=False,
         )
 
-        assert extraction.true_positive is False
-        assert extraction.false_negative is False
-        assert extraction.false_positive is True
-        assert extraction.true_negative is False
+        assert sample.true_positive is False
+        assert sample.false_negative is False
+        assert sample.false_positive is True
+        assert sample.true_negative is False
 
     @staticmethod
     def test_true_negative() -> None:
-        extraction = default_extraction(
+        sample = default_sample(
             ground_truth=None,
             prediction=None,
             accurate=True,
         )
 
-        assert extraction.true_positive is False
-        assert extraction.false_negative is False
-        assert extraction.false_positive is False
-        assert extraction.true_negative is True
+        assert sample.true_positive is False
+        assert sample.false_negative is False
+        assert sample.false_positive is False
+        assert sample.true_negative is True
 
     @staticmethod
     def test_from_values() -> None:
-        extraction = Extraction.from_values(
+        sample = Sample.from_values(
             file_name="Test File",
             field="Test Field",
             ground_truth_id=123,
@@ -98,36 +98,28 @@ class TestExtraction:
             confidence=0.9,
         )
 
-        assert extraction.file_name == "Test File"
-        assert extraction.field == "Test Field"
-        assert extraction.ground_truth_id == 123
-        assert extraction.prediction_id == 456
-        assert extraction.ground_truth == "Ground Truth"
-        assert extraction.prediction == "Prediction"
-        assert extraction.confidence == 0.9
-        assert extraction.edit_distance == 10
-        assert extraction.similarity == 0.2727272727272727
-        assert extraction.accurate is False
+        assert sample.file_name == "Test File"
+        assert sample.field == "Test Field"
+        assert sample.ground_truth_id == 123
+        assert sample.prediction_id == 456
+        assert sample.ground_truth == "Ground Truth"
+        assert sample.prediction == "Prediction"
+        assert sample.confidence == 0.9
+        assert sample.edit_distance == 10
+        assert sample.similarity == 0.2727272727272727
+        assert sample.accurate is False
 
 
-def test_extract() -> None:
-    model_name = "Test Model"
-    fields = ["Alpha", "Bravo"]
+def test_sample() -> None:
     ground_truths = [
         {"label": "Alpha", "text": "Tres"},
         {"label": "Bravo", "text": "Duo"},
         {"label": "Bravo", "text": "Unus"},
-        {"label": "Charlie", "text": "Nehil"},
-        {"label": "Charlie", "text": "Nehil"},
-        {"label": "Charlie", "text": "Nehil"},
     ]
     predictions = [
         {"label": "Alpha", "text": "Tres", "confidence": {"Alpha": 1.0}},
         {"label": "Bravo", "text": "Unus", "confidence": {"Bravo": 0.8}},
         {"label": "Bravo", "text": "Duodenum", "confidence": {"Bravo": 0.9}},
-        {"label": "Charlie", "text": "Nehil", "confidence": {"Charlie": 0.7}},
-        {"label": "Charlie", "text": "Nehil", "confidence": {"Charlie": 0.6}},
-        {"label": "Charlie", "text": "Nehil", "confidence": {"Charlie": 0.5}},
     ]
     results_and_names = [
         (
@@ -137,7 +129,7 @@ def test_extract() -> None:
                 "results": {
                     "document": {
                         "results": {
-                            model_name: {
+                            "Test Model": {
                                 "post_reviews": [
                                     ground_truths,
                                     predictions,
@@ -150,65 +142,65 @@ def test_extract() -> None:
         )
     ]
 
-    alpha_extraction, bravo_extraction, bravo_2_extraction = list(
-        extractions_for_results(results_and_names, model_name, fields)
+    alpha_sample, bravo_sample, bravo_2_sample = list(
+        samples_for_results(results_and_names)
     )
 
-    assert alpha_extraction.true_positive is True
-    assert bravo_extraction.false_positive is True
-    assert bravo_2_extraction.true_positive is True
+    assert alpha_sample.true_positive is True
+    assert bravo_sample.false_positive is True
+    assert bravo_2_sample.true_positive is True
 
 
 def test_combine() -> None:
-    ground_truth_extractions = [
-        default_extraction(
+    ground_truth_samples = [
+        default_sample(
             file_name="alpha.json",
             field="Bravo",
             ground_truth_id=123,
             ground_truth="Bravo GT",
         ),
-        default_extraction(
+        default_sample(
             file_name="alpha.json",
             field="Charlie",
             ground_truth_id=234,
             ground_truth="Charlie GT",
         ),
-        default_extraction(
+        default_sample(
             file_name="alpha.json",
             field="Bravo",
             ground_truth_id=345,
             ground_truth="Another Bravo GT",
         ),
-        default_extraction(
+        default_sample(
             file_name="delta.json",
             field="Bravo",
             ground_truth_id=987,
             ground_truth="Bravo GT",
         ),
     ]
-    prediction_extractions = [
-        default_extraction(
+    prediction_samples = [
+        default_sample(
             file_name="alpha.json",
             field="Bravo",
             prediction_id=456,
             prediction="Bravo Prediction",
             confidence=0.4,
         ),
-        default_extraction(
+        default_sample(
             file_name="alpha.json",
             field="Charlie",
             prediction_id=567,
             prediction="Charlie Prediction",
             confidence=0.5,
         ),
-        default_extraction(
+        default_sample(
             file_name="alpha.json",
             field="Charlie",
             prediction_id=678,
             prediction="Another Charlie Prediction",
             confidence=0.6,
         ),
-        default_extraction(
+        default_sample(
             file_name="delta.json",
             field="Bravo",
             prediction_id=654,
@@ -216,8 +208,8 @@ def test_combine() -> None:
             confidence=0.6,
         ),
     ]
-    combined_extractions = [
-        default_extraction(
+    combined_samples = [
+        default_sample(
             file_name="alpha.json",
             field="Bravo",
             ground_truth_id=123,
@@ -229,7 +221,7 @@ def test_combine() -> None:
             similarity=0.5833333333333333,
             accurate=False,
         ),
-        default_extraction(
+        default_sample(
             file_name="alpha.json",
             field="Charlie",
             ground_truth_id=234,
@@ -241,7 +233,7 @@ def test_combine() -> None:
             similarity=0.6428571428571428,
             accurate=False,
         ),
-        default_extraction(
+        default_sample(
             file_name="alpha.json",
             field="Bravo",
             ground_truth_id=345,
@@ -250,7 +242,7 @@ def test_combine() -> None:
             similarity=0.0,
             accurate=False,
         ),
-        default_extraction(
+        default_sample(
             file_name="delta.json",
             field="Bravo",
             ground_truth_id=987,
@@ -262,7 +254,7 @@ def test_combine() -> None:
             similarity=0.23076923076923073,
             accurate=False,
         ),
-        default_extraction(
+        default_sample(
             file_name="alpha.json",
             field="Charlie",
             prediction_id=678,
@@ -276,12 +268,10 @@ def test_combine() -> None:
 
     assert (
         sorted(
-            combine_extractions_by_file_name(
-                ground_truth_extractions, prediction_extractions
-            ),
+            combine_samples_by_file_name(ground_truth_samples, prediction_samples),
             key=lambda value: str(value.ground_truth_id) + str(value.prediction_id),
         )
-        == combined_extractions
+        == combined_samples
     )
 
 

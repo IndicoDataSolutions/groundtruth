@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from groundtruth.extractions import Extraction
 from groundtruth.metrics import (
     ConfusionMatrix,
     Metric,
@@ -8,9 +7,10 @@ from groundtruth.metrics import (
     stp_metrics,
     volume_metrics,
 )
+from groundtruth.samples import Sample
 
 
-def default_extraction(
+def default_sample(
     file_name: str = "",
     field: str = "",
     ground_truth_id: int = 0,
@@ -21,8 +21,8 @@ def default_extraction(
     edit_distance: int = 0,
     similarity: float = 0,
     accurate: bool = False,
-) -> Extraction:
-    return Extraction(
+) -> Sample:
+    return Sample(
         file_name=file_name,
         field=field,
         ground_truth_id=ground_truth_id,
@@ -71,7 +71,7 @@ class TestConfusionMatrix:
     def test_add_true_positive() -> None:
         cm = ConfusionMatrix()
         cm.add(
-            default_extraction(
+            default_sample(
                 ground_truth="True Positive",
                 prediction="True Positive",
                 accurate=True,
@@ -87,7 +87,7 @@ class TestConfusionMatrix:
     def test_add_false_negative() -> None:
         cm = ConfusionMatrix()
         cm.add(
-            default_extraction(
+            default_sample(
                 ground_truth="False Negative",
                 prediction=None,
                 accurate=False,
@@ -103,14 +103,14 @@ class TestConfusionMatrix:
     def test_add_false_positive() -> None:
         cm = ConfusionMatrix()
         cm.add(
-            default_extraction(
+            default_sample(
                 ground_truth=None,
                 prediction="False Positive",
                 accurate=False,
             )
         )
         cm.add(
-            default_extraction(
+            default_sample(
                 ground_truth="Ground Truth",
                 prediction="False Positive",
                 accurate=False,
@@ -126,7 +126,7 @@ class TestConfusionMatrix:
     def test_add_true_negative() -> None:
         cm = ConfusionMatrix()
         cm.add(
-            default_extraction(
+            default_sample(
                 ground_truth=None,
                 prediction=None,
                 accurate=True,
@@ -176,14 +176,14 @@ class TestCalculations:
     @staticmethod
     def test_accuracy() -> None:
         field = "Field A"
-        extractions = [
-            default_extraction(field=field, confidence=0.5, accurate=True),
-            default_extraction(field=field, confidence=0.5, accurate=True),
-            default_extraction(field=field, confidence=0.9, accurate=True),
-            default_extraction(field=field, confidence=0.9, accurate=False),
+        samples = [
+            default_sample(field=field, confidence=0.5, accurate=True),
+            default_sample(field=field, confidence=0.5, accurate=True),
+            default_sample(field=field, confidence=0.9, accurate=True),
+            default_sample(field=field, confidence=0.9, accurate=False),
         ]
         thresholds = [0.3, 0.8, 1.0]
-        metrics = list(accuracy_metrics(field, extractions, thresholds))
+        metrics = list(accuracy_metrics(field, samples, thresholds))
 
         assert metrics == [
             Metric(name="Accuracy", field=field, threshold=0.3, value=0.75),
@@ -194,9 +194,9 @@ class TestCalculations:
     @staticmethod
     def test_accuracy_no_preds() -> None:
         field = "Field A"
-        extractions: list[Extraction] = []
+        samples: list[Sample] = []
         thresholds = [1.0]
-        metrics = list(accuracy_metrics(field, extractions, thresholds))
+        metrics = list(accuracy_metrics(field, samples, thresholds))
 
         assert metrics == [
             Metric(name="Accuracy", field=field, threshold=1.0, value=None),
@@ -205,14 +205,14 @@ class TestCalculations:
     @staticmethod
     def test_volume() -> None:
         field = "Field A"
-        extractions = [
-            default_extraction(field=field, confidence=0.2),
-            default_extraction(field=field, confidence=0.7),
-            default_extraction(field=field, confidence=0.8),
-            default_extraction(field=field, confidence=0.9),
+        samples = [
+            default_sample(field=field, confidence=0.2),
+            default_sample(field=field, confidence=0.7),
+            default_sample(field=field, confidence=0.8),
+            default_sample(field=field, confidence=0.9),
         ]
         thresholds = [0.3, 0.8, 1.0]
-        metrics = list(volume_metrics(field, extractions, thresholds))
+        metrics = list(volume_metrics(field, samples, thresholds))
 
         assert metrics == [
             Metric(name="Volume", field=field, threshold=0.3, value=0.75),
@@ -223,9 +223,9 @@ class TestCalculations:
     @staticmethod
     def test_volume_no_preds() -> None:
         field = "Field A"
-        extractions: list[Extraction] = []
+        samples: list[Sample] = []
         thresholds = [1.0]
-        metrics = list(volume_metrics(field, extractions, thresholds))
+        metrics = list(volume_metrics(field, samples, thresholds))
 
         assert metrics == [
             Metric(name="Volume", field=field, threshold=1.0, value=None),
@@ -233,16 +233,16 @@ class TestCalculations:
 
     @staticmethod
     def test_stp() -> None:
-        extractions = [
-            default_extraction(file_name="alpha.json", confidence=0.2),
-            default_extraction(file_name="alpha.json", confidence=0.7),
-            default_extraction(file_name="bravo.json", confidence=0.7),
-            default_extraction(file_name="charlie.json", confidence=0.7),
-            default_extraction(file_name="charlie.json", confidence=0.9),
-            default_extraction(file_name="delta.json", confidence=0.9),
+        samples = [
+            default_sample(file_name="alpha.json", confidence=0.2),
+            default_sample(file_name="alpha.json", confidence=0.7),
+            default_sample(file_name="bravo.json", confidence=0.7),
+            default_sample(file_name="charlie.json", confidence=0.7),
+            default_sample(file_name="charlie.json", confidence=0.9),
+            default_sample(file_name="delta.json", confidence=0.9),
         ]
         thresholds = [0.3, 0.8, 1.0]
-        metrics = list(stp_metrics(extractions, thresholds))
+        metrics = list(stp_metrics(samples, thresholds))
 
         assert metrics == [
             Metric(name="STP", field="All Fields", threshold=0.3, value=0.75),
@@ -252,9 +252,9 @@ class TestCalculations:
 
     @staticmethod
     def test_stp_no_preds() -> None:
-        extractions: list[Extraction] = []
+        samples: list[Sample] = []
         thresholds = [1.0]
-        metrics = list(stp_metrics(extractions, thresholds))
+        metrics = list(stp_metrics(samples, thresholds))
 
         assert metrics == [
             Metric(name="STP", field="All Fields", threshold=1.0, value=None),

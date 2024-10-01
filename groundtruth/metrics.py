@@ -6,7 +6,7 @@ from pathlib import Path
 
 import polars
 
-from .extractions import Extraction, read_extractions
+from .samples import Sample, read_samples
 from .utils import group_by_attr
 
 
@@ -66,11 +66,11 @@ class ConfusionMatrix:
     false_positive: int = 0
     true_negative: int = 0
 
-    def add(self, extraction: Extraction) -> None:
-        self.true_positive += extraction.true_positive
-        self.false_negative += extraction.false_negative
-        self.false_positive += extraction.false_positive
-        self.true_negative += extraction.true_negative
+    def add(self, sample: Sample) -> None:
+        self.true_positive += sample.true_positive
+        self.false_negative += sample.false_negative
+        self.false_positive += sample.false_positive
+        self.true_negative += sample.true_negative
 
     @property
     def true(self) -> int:
@@ -126,8 +126,8 @@ class ConfusionMatrix:
             return None
 
 
-def extractions_to_analysis(
-    extractions_file: Path,
+def analyze_samples(
+    samples_file: Path,
     analysis_file: Path,
     thresholds: Sequence[float],
 ) -> None:
@@ -135,58 +135,58 @@ def extractions_to_analysis(
     Calculate accuracy, volume, and STP performance metrics at specified thresholds and
     write to an analysis CSV.
     """
-    extractions = tuple(read_extractions(extractions_file))
-    metrics = extraction_metrics_at_thresholds(extractions, thresholds)
+    samples = tuple(read_samples(samples_file))
+    metrics = sample_metrics_at_thresholds(samples, thresholds)
     write_metrics(metrics, analysis_file)
 
 
-def extraction_metrics_at_thresholds(
-    extractions: Sequence[Extraction],
+def sample_metrics_at_thresholds(
+    samples: Sequence[Sample],
     thresholds: Sequence[float],
 ) -> Iterator[Metric]:
     """
-    Yields accuracy, volume, and STP performance metrics from extractions at specified
+    Yields accuracy, volume, and STP performance metrics from samples at specified
     thresholds.
     """
-    for field, field_extractions in group_by_attr(extractions, "field"):
-        yield from accuracy_metrics(field, field_extractions, thresholds)
-        yield from volume_metrics(field, field_extractions, thresholds)
+    for field, field_samples in group_by_attr(samples, "field"):
+        yield from accuracy_metrics(field, field_samples, thresholds)
+        yield from volume_metrics(field, field_samples, thresholds)
 
-    yield from stp_metrics(extractions, thresholds)
+    yield from stp_metrics(samples, thresholds)
 
 
 def accuracy_metrics(
     field: str,
-    extractions: Sequence[Extraction],
+    samples: Sequence[Sample],
     thresholds: Iterable[float],
 ) -> Iterator[Metric]:
     """
-    Yield accuracy metrics from extractions at specified thresholds.
+    Yield accuracy metrics from samples at specified thresholds.
     """
     for threshold in thresholds:
         matrix = ConfusionMatrix()
 
-        for extraction in filter(confidence_above_threshold(threshold), extractions):
-            matrix.add(extraction)
+        for sample in filter(confidence_above_threshold(threshold), samples):
+            matrix.add(sample)
 
         yield Metric("Accuracy", field, threshold, matrix.accuracy)
 
 
 def volume_metrics(
     field: str,
-    extractions: Sequence[Extraction],
+    samples: Sequence[Sample],
     thresholds: Iterable[float],
 ) -> Iterator[Metric]:
     """
-    Yield volume metrics from extractions at specified thresholds.
+    Yield volume metrics from samples at specified thresholds.
     """
     for threshold in thresholds:
         straight_through_processed = tuple(
-            filter(confidence_above_threshold(threshold), extractions)
+            filter(confidence_above_threshold(threshold), samples)
         )
 
         try:
-            volume = len(straight_through_processed) / len(extractions)
+            volume = len(straight_through_processed) / len(samples)
         except ZeroDivisionError:
             volume = None
 
@@ -194,19 +194,19 @@ def volume_metrics(
 
 
 def stp_metrics(
-    extractions: Iterable[Extraction],
+    samples: Iterable[Sample],
     thresholds: Iterable[float],
 ) -> Iterator[Metric]:
     """
-    Yield STP metrics from extractions at specified thresholds.
+    Yield STP metrics from samples at specified thresholds.
     """
-    submission_groups = group_by_attr(extractions, "file_name")
+    submission_groups = group_by_attr(samples, "file_name")
 
     for threshold in thresholds:
         straight_through_processed = tuple(
             file_name
-            for file_name, extractions in submission_groups
-            if all(map(confidence_above_threshold(threshold), extractions))
+            for file_name, samples in submission_groups
+            if all(map(confidence_above_threshold(threshold), samples))
         )
 
         try:
@@ -219,14 +219,14 @@ def stp_metrics(
 
 def confidence_above_threshold(
     threshold: float,
-) -> Callable[[Extraction], bool]:
+) -> Callable[[Sample], bool]:
     """
-    Produce a filter function for extractions that have a confidence greater than or
+    Produce a filter function for samples that have a confidence greater than or
     equal to a threshold. Extractions without a confidence also pass.
     """
 
-    def threshold_filter(extraction: Extraction) -> bool:
-        return extraction.confidence is None or extraction.confidence >= threshold
+    def threshold_filter(sample: Sample) -> bool:
+        return sample.confidence is None or sample.confidence >= threshold
 
     return threshold_filter
 

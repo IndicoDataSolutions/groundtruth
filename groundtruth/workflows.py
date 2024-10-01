@@ -16,16 +16,15 @@ from .utils import sanitize
 logger = logging.getLogger(__name__)
 
 
-def submit_documents(
-    api_host: str,
-    api_token_file: Path,
+def submit_documents(  # type: ignore[no-any-unimported]
+    config: IndicoConfig,
     workflow_id: int,
     document_files: Iterable[Path],
 ) -> Iterator[int]:
     """
     Submit a collection of documents to a workflow and yield their submission IDs.
     """
-    client = IndicoClient(IndicoConfig(host=api_host, api_token_path=api_token_file))
+    client = IndicoClient(config)
 
     for document_file in document_files:
         (submission_id,) = client.call(
@@ -34,9 +33,8 @@ def submit_documents(
         yield submission_id
 
 
-def retrieve_results(
-    api_host: str,
-    api_token_file: Path,
+def retrieve_results(  # type: ignore[no-any-unimported]
+    config: IndicoConfig,
     results_folder: Path,
     submission_ids: Iterable[int],
 ) -> None:
@@ -45,7 +43,7 @@ def retrieve_results(
     Results are named the original file name with a `.json` extension.
     """
     results_folder.mkdir(parents=True, exist_ok=True)
-    client = IndicoClient(IndicoConfig(host=api_host, api_token_path=api_token_file))
+    client = IndicoClient(config)
 
     for submission_id in submission_ids:
         submission = client.call(GetSubmission(submission_id))
