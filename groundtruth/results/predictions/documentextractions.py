@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class DocumentExtraction(Extraction):
-    page: int
     start: int
     end: int
     groups: "set[Group]"
@@ -28,7 +27,7 @@ class DocumentExtraction(Extraction):
         prediction: object,
     ) -> "DocumentExtraction":
         """
-        Create an `DocumentExtraction` from a v1 prediction dictionary.
+        Create n `DocumentExtraction` from a v1 prediction dictionary.
         """
         return DocumentExtraction(
             document=document,
@@ -68,7 +67,7 @@ class DocumentExtraction(Extraction):
         prediction: object,
     ) -> "DocumentExtraction":
         """
-        Create an `DocumentExtraction` from a v3 prediction dictionary.
+        Create a `DocumentExtraction` from a v3 prediction dictionary.
         """
         return DocumentExtraction(
             document=document,
