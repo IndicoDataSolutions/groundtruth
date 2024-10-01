@@ -198,8 +198,8 @@ def extractions_for_result(
         for ground_truth_dict, prediction_dict in zip_match_longest(
             left=ground_truths_by_field[field],
             right=predictions_by_field[field],
-            left_key=lambda value: value["text"],  # type: ignore[no-any-return]
-            right_key=lambda value: value["text"],  # type: ignore[no-any-return]
+            left_key=lambda value: value["text"],
+            right_key=lambda value: value["text"],
         ):
             ground_truth = ground_truth_dict["text"] if ground_truth_dict else None
             prediction = prediction_dict["text"] if prediction_dict else None

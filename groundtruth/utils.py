@@ -86,9 +86,11 @@ def zip_match_longest(
 
     edit_distance_graph = [
         [
-            Levenshtein.distance(left_value, right_value)
-            if left_value is not None and right_value is not None
-            else 0
+            (
+                Levenshtein.distance(left_value, right_value)
+                if left_value is not None and right_value is not None
+                else 0
+            )
             for right_value in right_values
         ]
         for left_value in left_values
