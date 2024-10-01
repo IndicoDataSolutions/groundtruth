@@ -35,7 +35,12 @@ def submit(
     from . import workflows
     from .utils import sanitize
 
-    document_files = tuple(documents_folder.glob("*"))
+    document_files = tuple(
+        filter(
+            lambda file: not file.name.startswith("."),
+            documents_folder.glob("*"),
+        )
+    )
     tracked_document_files = rich.progress.track(
         document_files, description="Submitting...", auto_refresh=False
     )

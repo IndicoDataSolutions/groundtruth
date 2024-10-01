@@ -27,10 +27,25 @@ def submit_documents(  # type: ignore[no-any-unimported]
     client = IndicoClient(config)
 
     for document_file in document_files:
-        (submission_id,) = client.call(
-            WorkflowSubmission(workflow_id=workflow_id, files=[document_file])
-        )
-        yield submission_id
+        if document_file.is_file():
+            (submission_id,) = client.call(
+                WorkflowSubmission(workflow_id=workflow_id, files=[document_file])
+            )
+            yield submission_id
+
+        elif document_file.is_dir():
+            bundle_files = list(
+                filter(
+                    lambda file: file.is_file() and not file.name.startswith("."),
+                    document_file.glob("*"),
+                )
+            )
+            (submission_id,) = client.call(
+                WorkflowSubmission(
+                    workflow_id=workflow_id, files=bundle_files, bundle=True
+                )
+            )
+            yield submission_id
 
 
 def retrieve_results(  # type: ignore[no-any-unimported]
