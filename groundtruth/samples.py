@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import logging
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
@@ -9,13 +8,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import polars
+import rich
 from Levenshtein import distance, ratio
 
 from . import results
 from .results import Extraction, Result
 from .utils import zip_match_longest
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -119,15 +117,20 @@ def samples_for_results(
 
 def samples_for_result(result_file_name: str, result: Result) -> Iterator[Sample]:
     if not result.auto_review:
-        logger.warning(
-            f"Result '{result_file_name}' does not contain an auto review. Skipping."
+        rich.print(
+            "[yellow]"
+            f"Result '{result_file_name}' does not contain an auto review. "
+            "Skipping."
+            "[/]"
         )
         return
 
     if not result.manual_review:
-        logger.warning(
+        rich.print(
+            "[yellow]"
             f"Result '{result_file_name}' does not contain an HITL review. "
             "Will lack ground truth."
+            "[/]"
         )
 
     ground_truths_by_field: defaultdict[str, list[Extraction]] = defaultdict(list)
@@ -279,7 +282,9 @@ def combine_samples_by_field(
                     confidence=prediction_extraction.confidence,
                 )
             else:
-                logger.error(
+                rich.print(
+                    "[red]"
                     "Matched ground truth and prediction pair were both `None` for "
                     f"field '{field}'. This shouldn't be able to happen."
+                    "[/]"
                 )
