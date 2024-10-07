@@ -63,14 +63,18 @@ def retrieve(
 
     config = IndicoConfig(host=host, api_token_path=token)
 
-    submission_ids = polars.read_csv(submission_ids_file)["submission_id"]
-    tracked_submission_ids = rich.progress.track(
-        submission_ids, description="Retrieving...", auto_refresh=False
+    csv = polars.read_csv(submission_ids_file)
+    submission_ids = csv["submission_id"]
+    file_names = csv["file_name"]
+    tracked_submissions = rich.progress.track(
+        list(zip(submission_ids, file_names)),
+        description="Retrieving...",
+        auto_refresh=False,
     )
     workflows.retrieve_results(
         config=config,
         results_folder=results_folder,
-        submission_ids=tracked_submission_ids,
+        submissions=tracked_submissions,
     )
 
 

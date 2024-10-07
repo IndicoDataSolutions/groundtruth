@@ -51,7 +51,7 @@ def submit_documents(  # type: ignore[no-any-unimported]
 def retrieve_results(  # type: ignore[no-any-unimported]
     config: IndicoConfig,
     results_folder: Path,
-    submission_ids: Iterable[int],
+    submissions: Iterable[tuple[int, str]],
 ) -> None:
     """
     Retrieve result JSONs for submissions into a folder.
@@ -60,12 +60,12 @@ def retrieve_results(  # type: ignore[no-any-unimported]
     results_folder.mkdir(parents=True, exist_ok=True)
     client = IndicoClient(config)
 
-    for submission_id in submission_ids:
+    for submission_id, file_name in submissions:
         submission = client.call(GetSubmission(submission_id))
         submission_result = client.call(SubmissionResult(submission, wait=True))
         result = client.call(RetrieveStorageObject(submission_result.result))
 
-        sanitized_file_name = sanitize(submission.input_filename)
-        result_file = Path(sanitized_file_name).with_suffix(".json")
+        sanitized_file_name = sanitize(file_name)
+        result_file = Path(sanitized_file_name + ".json")
         result_file = results_folder / result_file
         result_file.write_text(json.dumps(result))
