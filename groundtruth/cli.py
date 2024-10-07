@@ -5,26 +5,13 @@ import arguably
 from indico import IndicoConfig
 
 required = arguably.arg.required()
-config: IndicoConfig  # type: ignore[no-any-unimported]
-
-
-@arguably.command
-def __root__(
-    *,
-    host: Annotated[str, required],
-    token: Annotated[Path, required],
-) -> None:
-    """
-    Runs before all other commands, providing global options and setup.
-    """
-    global config
-
-    config = IndicoConfig(host=host, api_token_path=token)
 
 
 @arguably.command
 def submit(
     *,
+    host: Annotated[str, required],
+    token: Annotated[Path, required],
     workflow_id: Annotated[int, required],
     documents_folder: Path = Path("documents"),
     submission_ids_file: Path = Path("submission_ids.csv"),
@@ -34,6 +21,8 @@ def submit(
 
     from . import workflows
     from .utils import sanitize
+
+    config = IndicoConfig(host=host, api_token_path=token)
 
     document_files = tuple(
         filter(
@@ -62,6 +51,8 @@ def submit(
 @arguably.command
 def retrieve(
     *,
+    host: Annotated[str, required],
+    token: Annotated[Path, required],
     submission_ids_file: Path = Path("submission_ids.csv"),
     results_folder: Path = Path("results"),
 ) -> None:
@@ -69,6 +60,8 @@ def retrieve(
     import rich.progress
 
     from . import workflows
+
+    config = IndicoConfig(host=host, api_token_path=token)
 
     submission_ids = polars.read_csv(submission_ids_file)["submission_id"]
     tracked_submission_ids = rich.progress.track(
@@ -83,6 +76,7 @@ def retrieve(
 
 @arguably.command
 def extract(
+    *,
     results_folder: Path = Path("results"),
     samples_file: Path = Path("samples.csv"),
 ) -> None:
@@ -103,6 +97,7 @@ def extract(
 
 @arguably.command
 def combine(
+    *,
     ground_truths_file: Path = Path("ground_truths.csv"),
     predictions_file: Path = Path("predictions.csv"),
     combined_file: Path = Path("combined.csv"),
