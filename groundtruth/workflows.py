@@ -3,6 +3,7 @@ import logging
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
+import rich
 from indico import IndicoClient, IndicoConfig
 from indico.queries import (
     GetSubmission,
@@ -62,6 +63,16 @@ def retrieve_results(  # type: ignore[no-any-unimported]
 
     for submission_id, file_name in submissions:
         submission = client.call(GetSubmission(submission_id))
+
+        if submission.files_deleted:
+            rich.print(
+                "[yellow]"
+                f"Submission {submission_id} {file_name!r} has been deleted. "
+                "Skipping."
+                "[/]"
+            )
+            continue
+
         submission_result = client.call(SubmissionResult(submission, wait=True))
         result = client.call(RetrieveStorageObject(submission_result.result))
 
