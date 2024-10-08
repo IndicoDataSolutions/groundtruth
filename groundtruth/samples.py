@@ -108,8 +108,6 @@ def samples_for_results(
 ) -> Iterator[Sample]:
     """
     Yield ground truth/prediction samples for all models and fields.
-    Results without auto-review will be skipped. Results without HITL-review will lack
-    ground truth.
     """
     for result_file_name, result in results_and_names:
         yield from samples_for_result(result_file_name, result)
@@ -119,17 +117,16 @@ def samples_for_result(result_file_name: str, result: Result) -> Iterator[Sample
     if not result.auto_review:
         rich.print(
             "[yellow]"
-            f"Result '{result_file_name}' does not contain an auto review. "
-            "Skipping."
+            f"Result {result_file_name!r} does not contain an auto review. "
+            "Samples will lack predictions."
             "[/]"
         )
-        return
 
     if not result.manual_review:
         rich.print(
             "[yellow]"
-            f"Result '{result_file_name}' does not contain an HITL review. "
-            "Will lack ground truth."
+            f"Result {result_file_name!r} does not contain an HITL review. "
+            "Samples will lack ground truth."
             "[/]"
         )
 
@@ -285,6 +282,6 @@ def combine_samples_by_field(
                 rich.print(
                     "[red]"
                     "Matched ground truth and prediction pair were both `None` for "
-                    f"field '{field}'. This shouldn't be able to happen."
+                    f"field {field!r}. This shouldn't be able to happen."
                     "[/]"
                 )
