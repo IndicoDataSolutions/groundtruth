@@ -167,8 +167,14 @@ def write_samples(samples: Iterable[Sample], samples_file: Path) -> None:
     """
     Write samples to a CSV file.
     """
-    dataframe = polars.DataFrame(map(dataclasses.asdict, samples))
-    dataframe.write_csv(samples_file, null_value="__novalue__")
+    dataframe = polars.DataFrame(
+        map(dataclasses.asdict, samples),
+        infer_schema_length=None,
+    )
+    dataframe.write_csv(
+        samples_file,
+        null_value="__novalue__",
+    )
 
 
 def combine_samples(
@@ -194,7 +200,11 @@ def read_samples(samples_file: Path) -> Iterator[Sample]:
     """
     Read samples from a CSV file.
     """
-    samples = polars.read_csv(samples_file, null_values=["__novalue__"])
+    samples = polars.read_csv(
+        samples_file,
+        infer_schema_length=None,
+        null_values=["__novalue__"],
+    )
 
     for sample in samples.iter_rows(named=True):
         yield Sample(**sample)
