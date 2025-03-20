@@ -11,7 +11,7 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.10,<4"
-version = "1.2.1"
+version = "1.3.0"
 dependencies = [
     "aiometer (>=0.5.0,<0.6)",
     "arguably (>=1.3.0,<2)",
