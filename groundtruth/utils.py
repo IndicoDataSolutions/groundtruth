@@ -3,9 +3,9 @@ import operator
 from collections.abc import Callable, Iterable, Iterator
 from typing import TypeVar
 
-import Levenshtein
 from munkres import Munkres
 from pathvalidate import sanitize_filename
+from rapidfuzz.distance import Levenshtein
 
 Value = TypeVar("Value")
 

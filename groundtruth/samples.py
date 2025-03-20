@@ -9,7 +9,8 @@ import polars
 import rich
 from indico_toolkit import results
 from indico_toolkit.results import Extraction, Result
-from Levenshtein import distance, ratio
+from rapidfuzz.distance.Indel import normalized_similarity as ratio
+from rapidfuzz.distance.Levenshtein import distance
 
 from .utils import zip_match_longest
 
