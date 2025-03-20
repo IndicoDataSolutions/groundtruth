@@ -104,7 +104,7 @@ def read_results(result_files: Iterable[Path]) -> Iterator[tuple[str, Result]]:
 
 
 def samples_for_results(
-    results_and_names: Iterable[tuple[str, Result]]
+    results_and_names: Iterable[tuple[str, Result]],
 ) -> Iterator[Sample]:
     """
     Yield ground truth/prediction samples for all models and fields.
