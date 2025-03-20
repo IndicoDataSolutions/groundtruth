@@ -1,13 +1,11 @@
-from __future__ import annotations
-
 import itertools
 import operator
 from collections.abc import Callable, Iterable, Iterator
 from typing import TypeVar
 
-import Levenshtein
 from munkres import Munkres
 from pathvalidate import sanitize_filename
+from rapidfuzz.distance import Levenshtein
 
 Value = TypeVar("Value")
 
@@ -86,9 +84,11 @@ def zip_match_longest(
 
     edit_distance_graph = [
         [
-            Levenshtein.distance(left_value, right_value)
-            if left_value is not None and right_value is not None
-            else 0
+            (
+                Levenshtein.distance(left_value, right_value)
+                if left_value is not None and right_value is not None
+                else 0
+            )
             for right_value in right_values
         ]
         for left_value in left_values

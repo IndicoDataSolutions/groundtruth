@@ -8,22 +8,22 @@ on:
 
 jobs:
   Python:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - name: Checkout Commit
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install Poetry
-      run: pipx install "poetry>=1.2.2,<2"
+      run: pipx install "poetry>=2,<3"
 
     - name: Install Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: "poetry"
@@ -34,13 +34,13 @@ jobs:
         poetry install
 
     - name: Run Black
-      run: poetry run poe black_check
+      run: poetry poe black-check
 
     - name: Run Ruff
-      run: poetry run poe ruff
+      run: poetry poe ruff-check
 
     - name: Run Mypy
-      run: poetry run poe mypy
+      run: poetry poe mypy
 
     - name: Run Pytest
-      run: poetry run poe pytest
+      run: poetry poe pytest

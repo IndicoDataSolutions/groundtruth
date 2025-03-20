@@ -1,56 +1,57 @@
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry]
+[project]
 name = "groundtruth"
-version = "1.2.1"
 description = "Ground Truth Analysis Tooling"
-authors = [
-    "Anna Liu <anna.liu@indicodata.ai>",
-    "Michael Welborn <michael.welborn@indicodata.ai>",
-    "Nate Shim <nate.shim@indicodata.ai>",
-    "Scott Levin <scott.levin@indicodata.ai>",
-]
 license = "MIT"
+authors = [
+    { name = "Indico Solutions Engineering", email = "solutionsengineering@indicodata.ai" },
+]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-aiometer = "^0.4.0"
-indico-client = "^5.9.0"
-indico-toolkit = "^2.0.2"
-levenshtein = "^0.21.0"
-munkres = "^1.1.4"
-pathvalidate = "^3.0.0"
-polars = "^0.17.12"
-rich = "^13.3.5"
+requires-python = ">=3.10,<4"
+version = "1.3.0"
+dependencies = [
+    "aiometer (>=0.5.0,<0.6)",
+    "arguably (>=1.3.0,<2)",
+    "indico-client (>=6.14.0,<7)",
+    "indico-toolkit (>=6.14.0,<7)",
+    "munkres (>=1.1.4,<2)",
+    "pathvalidate (>=3.2.1,<4)",
+    "polars (>=1.8.2,<2)",
+    "rapidfuzz (>=3.12.2,<4.0.0)",
+    "rich (>=13.9.1,<14)",
+]
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.1.0"
-coverage = "^7.1.0"
-mypy = "^1.0.0"
-pandas-stubs = "^2.0.1.230501"
-poethepoet = "^0.18.1"
-pytest = "^7.2.1"
-pytest-asyncio = "^0.20.3"
-pytest-cov = "^4.0.0"
-ruff = "^0.0.243"
+black = "^25.1.0"
+coverage = "^7.6.12"
+mypy = "^1.15.0"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.3"
+pytest-cov = "^6.0.0"
+pytest-mock = "^3.14.0"
+ruff = "^0.9.6"
+
+[tool.poetry.requires-plugins]
+poetry-plugin-shell = "^1.0.0"
+poethepoet = {extras = ["poetry-plugin"], version = "^0.33.0"}
 
 [tool.poetry.scripts]
 groundtruth = "groundtruth.cli:main"
 
 [tool.poe.tasks]
-black = "black groundtruth scripts tests"
-black_check = "black --check groundtruth scripts tests"
+black = "black groundtruth tests"
+black-check = "black --check groundtruth tests"
 coverage = "coverage html"
-mypy = "mypy groundtruth scripts tests"
-pytest = "pytest scripts tests --cov=groundtruth"
-ruff = "ruff groundtruth scripts tests"
-ruff_fix = "ruff --fix-only --exit-zero groundtruth scripts tests"
+mypy = "mypy groundtruth tests"
+pytest = "pytest tests --cov=groundtruth"
+ruff = "ruff check --fix-only --exit-zero groundtruth tests"
+ruff-check = "ruff check groundtruth tests"
 
-format = ["ruff_fix", "black"]
-check = ["ruff", "mypy"]
+format = ["ruff", "black"]
+check = ["ruff-check", "black-check", "mypy"]
 test = ["pytest", "coverage"]
 all = ["format", "check", "test"]
 
@@ -59,8 +60,8 @@ line-length = 88
 
 [tool.ruff]
 line-length = 88
-select = ["E", "F", "I"]
-fixable = ["I"]
+lint.select = ["E", "F", "I"]
+lint.fixable = ["I"]
 
 [tool.mypy]
 strict = true
@@ -78,6 +79,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 branch = true
