@@ -2,12 +2,16 @@
 
 Ground Truth Analysis Tooling
 
-Requires Python ^3.9 and Poetry ^1.2
+**This repository contains software that is not officially supported by Indico. It may
+  be outdated or contain bugs. The operations it performs are potentially destructive.
+  Use at your own risk.**
+
+Requires Python ^3.10 and Poetry ^2.0
 
 ``` shell
 $ poetry install
-$ poetry run poe {format,check,test,all}
-$ poetry run groundtruth --help
+$ poetry poe {format,check,test,all}
+$ poetry groundtruth --help
 ```
 
 **CAVEATS:**
