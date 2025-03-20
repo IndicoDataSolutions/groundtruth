@@ -8,7 +8,7 @@ from pathlib import Path
 import polars
 import rich
 from indico_toolkit import results
-from indico_toolkit.results import Extraction, Result
+from indico_toolkit.results import Extraction, Prediction, Result
 from rapidfuzz.distance.Indel import normalized_similarity as ratio
 from rapidfuzz.distance.Levenshtein import distance
 
@@ -98,7 +98,7 @@ def read_results(result_files: Iterable[Path]) -> Iterator[tuple[str, Result]]:
     Yield file names and parsed results from JSONs.
     """
     for result_file in result_files:
-        result = results.load(result_file)
+        result = results.load(result_file, reader=Path.read_text)
         yield result_file.name, result
 
 
@@ -129,26 +129,19 @@ def samples_for_result(result_file_name: str, result: Result) -> Iterator[Sample
             "[/]"
         )
 
-    ground_truths_by_field: defaultdict[str, list[Extraction]] = defaultdict(list)
-    predictions_by_field: defaultdict[str, list[Extraction]] = defaultdict(list)
-
-    for prediction in result.auto_review.extractions.where(rejected=False):
-        predictions_by_field[prediction.label].append(prediction)
-
-    for ground_truth in result.manual_review.extractions.where(rejected=False):
-        ground_truths_by_field[ground_truth.label].append(ground_truth)
-
+    predictions_by_field = result.auto_review.where(unrejected).groupby(label_or_model)
+    ground_truths_by_field = result.manual_review.where(unrejected).groupby(label_or_model)  # fmt: skip  # noqa: E501
     fields = set(ground_truths_by_field.keys()) | set(predictions_by_field.keys())
 
     for field in sorted(fields):
-        for ground_truth, prediction in zip_match_longest(  # type: ignore[assignment]
+        for ground_truth, prediction in zip_match_longest(
             left=ground_truths_by_field[field],
             right=predictions_by_field[field],
-            left_key=lambda value: value.text,
-            right_key=lambda value: value.text,
+            left_key=text_or_label,
+            right_key=text_or_label,
         ):
-            ground_truth_text = ground_truth.text if ground_truth else None
-            prediction_text = prediction.text if prediction else None
+            ground_truth_value = text_or_label(ground_truth) if ground_truth else None
+            prediction_value = text_or_label(prediction) if prediction else None
             confidence = prediction.confidence if prediction else None
 
             yield Sample.from_values(
@@ -156,10 +149,35 @@ def samples_for_result(result_file_name: str, result: Result) -> Iterator[Sample
                 field=field,
                 ground_truth_id=result.submission_id,
                 prediction_id=result.submission_id,
-                ground_truth=ground_truth_text,
-                prediction=prediction_text,
+                ground_truth=ground_truth_value,
+                prediction=prediction_value,
                 confidence=confidence,
             )
+
+
+def unrejected(prediction: Prediction) -> bool:
+    """
+    Return if a prediction is an unrejected extraction or classification.
+    """
+    return not isinstance(prediction, Extraction) or not prediction.rejected
+
+
+def label_or_model(prediction: Prediction) -> str:
+    """
+    Return the label for extractions and the model name for classifications.
+    """
+    return (
+        prediction.label
+        if isinstance(prediction, Extraction)
+        else prediction.model.name
+    )
+
+
+def text_or_label(prediction: Prediction) -> str:
+    """
+    Return the text for extractions and the label for classifications.
+    """
+    return prediction.text if isinstance(prediction, Extraction) else prediction.label
 
 
 def write_samples(samples: Iterable[Sample], samples_file: Path) -> None:
