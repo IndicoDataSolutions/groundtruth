@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from groundtruth.metrics import (
     ConfusionMatrix,
     Metric,

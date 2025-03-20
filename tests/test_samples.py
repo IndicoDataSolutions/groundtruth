@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from indico_toolkit.results import (
     DocumentExtraction,
     PredictionList,

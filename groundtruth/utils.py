@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import itertools
 import operator
 from collections.abc import Callable, Iterable, Iterator
