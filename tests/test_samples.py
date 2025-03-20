@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from groundtruth.results import (
+from indico_toolkit.results import (
     DocumentExtraction,
     PredictionList,
     Result,
     Review,
     ReviewType,
 )
+
 from groundtruth.samples import (
     Sample,
     combine_samples_by_file_name,
@@ -132,9 +133,7 @@ def default_extraction(
         text=text,
         accepted=False,
         rejected=False,
-        page=0,
-        start=0,
-        end=0,
+        spans=[],
         groups=set(),
         extras={},
     )
@@ -151,8 +150,8 @@ def test_sample() -> None:
     result = Result(
         version=1,
         submission_id=123,
-        documents=[],
-        models=[],
+        documents=tuple(),
+        models=tuple(),
         predictions=PredictionList(
             (
                 default_extraction(
@@ -190,7 +189,7 @@ def test_sample() -> None:
                 ),
             )
         ),
-        reviews=[auto_review, manual_review],
+        reviews=(auto_review, manual_review),
     )
 
     results_and_names = [("abc.json", result)]

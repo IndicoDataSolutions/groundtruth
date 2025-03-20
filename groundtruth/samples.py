@@ -9,10 +9,10 @@ from pathlib import Path
 
 import polars
 import rich
+from indico_toolkit import results
+from indico_toolkit.results import Extraction, Result
 from Levenshtein import distance, ratio
 
-from . import results
-from .results import Extraction, Result
 from .utils import zip_match_longest
 
 
