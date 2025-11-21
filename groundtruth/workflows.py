@@ -34,7 +34,7 @@ def submit_documents(  # type: ignore[no-any-unimported]
             yield submission_id
 
         elif document_file.is_dir():
-            bundle_files = list(
+            bundle_files = sorted(
                 filter(
                     lambda file: file.is_file() and not file.name.startswith("."),
                     document_file.glob("*"),
