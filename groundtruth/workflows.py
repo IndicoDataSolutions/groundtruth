@@ -8,6 +8,7 @@ from indico import IndicoClient, IndicoConfig
 from indico.queries import (
     GetSubmission,
     RetrieveStorageObject,
+    RetrySubmission,
     WorkflowSubmission,
 )
 
@@ -87,3 +88,19 @@ def retrieve_results(  # type: ignore[no-any-unimported]
         result_file = Path(sanitized_file_name + ".json")
         result_file = results_folder / result_file
         result_file.write_text(json.dumps(result))
+
+
+def retry_failed_submissions(  # type: ignore[no-any-unimported]
+    config: IndicoConfig,
+    submission_ids: Iterable[int],
+) -> None:
+    """
+    Retry failed submissions.
+    """
+    client = IndicoClient(config)
+
+    for submission_id in submission_ids:
+        submission = client.call(GetSubmission(submission_id))
+
+        if submission.status == "FAILED":
+            client.call(RetrySubmission([submission_id]))
