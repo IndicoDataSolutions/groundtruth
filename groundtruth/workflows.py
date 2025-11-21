@@ -8,7 +8,6 @@ from indico import IndicoClient, IndicoConfig
 from indico.queries import (
     GetSubmission,
     RetrieveStorageObject,
-    SubmissionResult,
     WorkflowSubmission,
 )
 
@@ -73,8 +72,7 @@ def retrieve_results(  # type: ignore[no-any-unimported]
             )
             continue
 
-        submission_result = client.call(SubmissionResult(submission, wait=True))
-        result = client.call(RetrieveStorageObject(submission_result.result))
+        result = client.call(RetrieveStorageObject(submission.result_file))
 
         sanitized_file_name = sanitize(file_name)
         result_file = Path(sanitized_file_name + ".json")
