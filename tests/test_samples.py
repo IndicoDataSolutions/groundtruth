@@ -124,7 +124,7 @@ def default_extraction(
 ) -> DocumentExtraction:
     return DocumentExtraction(
         document=None,  # type: ignore[arg-type]
-        model=None,  # type: ignore[arg-type]
+        task=None,  # type: ignore[arg-type]
         review=review,
         label=label,
         confidences={label: confidence},
@@ -146,10 +146,9 @@ def test_sample() -> None:
     )
 
     result = Result(
-        version=1,
         submission_id=123,
         documents=tuple(),
-        models=tuple(),
+        tasks=tuple(),
         predictions=PredictionList(
             (
                 default_extraction(
