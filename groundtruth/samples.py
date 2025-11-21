@@ -169,8 +169,8 @@ def label_or_model(prediction: Prediction) -> str:
     return (
         prediction.label
         if isinstance(prediction, Extraction)
-        else prediction.model.name
-    )
+        else prediction.task.name
+    )  # fmt: skip
 
 
 def text_or_label(prediction: Prediction) -> str:

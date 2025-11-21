@@ -49,6 +49,33 @@ def submit(
 
 
 @arguably.command
+def retry(
+    *,
+    host: Annotated[str, required],
+    token: Annotated[Path, required],
+    submission_ids_file: Path = Path("submission_ids.csv"),
+) -> None:
+    import polars
+    import rich.progress
+
+    from . import workflows
+
+    config = IndicoConfig(host=host, api_token_path=token)
+
+    csv = polars.read_csv(submission_ids_file)
+    submission_ids = csv["submission_id"]
+    tracked_submissions = rich.progress.track(
+        submission_ids,
+        description="Retrying...",
+        auto_refresh=False,
+    )
+    workflows.retry_failed_submissions(
+        config=config,
+        submission_ids=tracked_submissions,
+    )
+
+
+@arguably.command
 def retrieve(
     *,
     host: Annotated[str, required],

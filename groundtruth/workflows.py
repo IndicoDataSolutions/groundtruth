@@ -8,7 +8,7 @@ from indico import IndicoClient, IndicoConfig
 from indico.queries import (
     GetSubmission,
     RetrieveStorageObject,
-    SubmissionResult,
+    RetrySubmission,
     WorkflowSubmission,
 )
 
@@ -35,7 +35,7 @@ def submit_documents(  # type: ignore[no-any-unimported]
             yield submission_id
 
         elif document_file.is_dir():
-            bundle_files = list(
+            bundle_files = sorted(
                 filter(
                     lambda file: file.is_file() and not file.name.startswith("."),
                     document_file.glob("*"),
@@ -73,10 +73,34 @@ def retrieve_results(  # type: ignore[no-any-unimported]
             )
             continue
 
-        submission_result = client.call(SubmissionResult(submission, wait=True))
-        result = client.call(RetrieveStorageObject(submission_result.result))
+        if submission.status == "FAILED":
+            rich.print(
+                "[yellow]"
+                f"Submission {submission_id} {file_name!r} failed. "
+                "Skipping."
+                "[/]"
+            )
+            continue
+
+        result = client.call(RetrieveStorageObject(submission.result_file))
 
         sanitized_file_name = sanitize(file_name)
         result_file = Path(sanitized_file_name + ".json")
         result_file = results_folder / result_file
         result_file.write_text(json.dumps(result))
+
+
+def retry_failed_submissions(  # type: ignore[no-any-unimported]
+    config: IndicoConfig,
+    submission_ids: Iterable[int],
+) -> None:
+    """
+    Retry failed submissions.
+    """
+    client = IndicoClient(config)
+
+    for submission_id in submission_ids:
+        submission = client.call(GetSubmission(submission_id))
+
+        if submission.status == "FAILED":
+            client.call(RetrySubmission([submission_id]))

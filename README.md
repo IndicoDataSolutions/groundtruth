@@ -11,13 +11,12 @@ Requires Python ^3.10 and Poetry ^2.0
 ``` shell
 $ poetry install
 $ poetry poe {format,check,test,all}
-$ poetry groundtruth --help
+$ poetry run groundtruth --help
 ```
 
 **CAVEATS:**
-- This program only works with extraction models.
-- This program requires results to be in file version 1 format.
-- This program does not work with bundled submissions or unbundling workflows.
+- This program requires results to be in file version 3 format.
+- This program requires results to be from a workflow on IPA 7.2 or later.
 - This program requires Auto Review to be enabled for the workflow.
 
 ## Analysis Process
@@ -36,57 +35,89 @@ review URLs of the submitted documents will be written to a CSV for future refer
 groundtruth submit \
     --host try.indico.io --token indico_api_token.txt \
     --workflow-id 1234 --documents-folder documents \
-    --submission-ids-file ground_truth_submission_ids.csv
+    --submission-ids-file submission_ids.csv
 ~~~
 
-At this point, all of the submissions listed in the `ground_truth_submission_ids.csv`
-will be queued for processing. Once processed, they should all be manually reviewed to
-establish ground truth. After all reviews have been completed, the results can be
-downloaded using the `retrieve` command.
+Once all submissions have been processed and auto reviewed, download the auto reviewed
+result files with the `retrieve` command. These contain the predictions to be compared
+against ground truth later.
 
 ~~~ shell
 groundtruth retrieve \
     --host try.indico.io --token indico_api_token.txt \
-    --submission-ids-file ground_truth_submission_ids.csv \
-    --results-folder ground_truth_results
+    --submission-ids-file submission_ids.csv \
+    --results-folder auto_reviews
 ~~~
 
-These results contain the ground truths *and* predictions for the first round of ground
-truth analysis. Ground truths and prediction samples for a specific model can be
-extracted from the results using the `extract` command.
+Failed submissions will be logged and may be retried with the `retry` command.
+
+~~~ shell
+groundtruth retry \
+    --host try.indico.io --token indico_api_token.txt \
+    --submission-ids-file submission_ids.csv
+~~~
+
+Now review all submissions in Indico to capture the ground truth "answer key." You may
+use the review URLs in `submissions_ids.csv` to navigate to them directly.
+
+Once all submissions have been reviewed, download the HITL reviewed result files. These
+contain the ground truths to be compared.
+
+~~~ shell
+groundtruth retrieve \
+    --host try.indico.io --token indico_api_token.txt \
+    --submission-ids-file submission_ids.csv \
+    --results-folder ground_truths
+~~~
+
+Extract the labels, values, and confidences for `auto_reviews` and `ground_truths` with
+the `extract` command. Combine the output CSVs with the `combine` command. This will
+automatically match predictions and ground truths by similarity.
 
 ~~~ shell
 groundtruth extract \
-    --results-folder ground_truth_results \
-    --extractions-file ground_truth_extractions.csv \
-    --model "Invoice Extraction Model"
+    --results-folder auto_reviews \
+    --samples-file auto_reviews.csv
 ~~~
 
-At this point, the ground truth/prediction samples in `ground_truth_extractions.csv`
-should be manually reviewed to set the `accurate` column to `TRUE` for any samples that
-should be considered accurate but that were not identical. The `edit_distance` and
-`similarity` columns can be used to bubble up to the top of the extractions file
-samples that are likely to be accurate. Any corrections to the selected ground truth
-values should also be made in the `ground_truth` column to be used for this and future
-rounds of analysis.
+~~~ shell
+groundtruth extract \
+    --results-folder ground_truths \
+    --samples-file ground_truths.csv
+~~~
 
-After manual review and correction, the extractions file can be analyzed using the
-`analyze` command to produce accuracy, volume, and STP performance metrics for a range
-of confidence thresholds. Any samples that should not be included in the analysis
-(such as ground truths with no value) should be filtered out of the extractions file
-prior to analyzing it.
+~~~ shell
+groundtruth combine \
+    --ground-truths-file ground_truths.csv \
+    --predictions-file auto_reviews.csv \
+    --combined-file samples.csv
+~~~
+
+At this point, the samples in `samples.csv` should be manually reviewed to set the
+`accurate` column to `TRUE` for any ground truth/prediction pairs that should be
+considered accurate but whose values were not character-for-character identical. The
+`edit_distance` and `similarity` columns can be used to bubble up to the top of the
+samples file values that are likely to be accurate. Any corrections to the selected
+ground truth values should also be made in the `ground_truth` column to be used for
+future rounds of analysis.
+
+After manual review and correction, the samples file can be analyzed using the `analyze`
+command to produce accuracy, volume, and STP performance metrics for a range of
+specified confidence thresholds. Any samples that should not be included in the
+analysis (such as ground truths with no value) should be filtered out of the
+samples file prior to analyzing it.
 
 ~~~ shell
 groundtruth analyze \
-    --extractions-file ground_truth_extractions.csv \
-    --analysis-file ground_truth_analysis.csv \
+    --samples-file samples.csv \
+    --analysis-file analysis.csv \
     0.85 0.95 0.99 0.99999
 ~~~
 
 Additional rounds of analysis can be performed after model remediation or auto review
 enhancements have been made to determine the performance impact. Use the `submit`,
 `retrieve`, and `extract` commands to process the same folder of documents through the
-updated workflow, saving the results and IDs as a new set.
+updated workflow, saving the results and IDs as a new CSV.
 
 ~~~ shell
 groundtruth submit \
@@ -99,33 +130,31 @@ groundtruth submit \
 groundtruth retrieve \
     --host try.indico.io --token indico_api_token.txt \
     --submission-ids-file remediated_submission_ids.csv \
-    --results-folder remediated_results
+    --results-folder remediated_reviews
 ~~~
 
 ~~~ shell
 groundtruth extract \
-    --results-folder remediated_results \
-    --extractions-file remediated_extractions.csv \
-    --model "Invoice Extraction Model"
+    --results-folder remediated_reviews \
+    --samples-file remediations.csv
 ~~~
 
-Note that the results and extractions will *not* contain ground truths, only remediated
-predictions. Use the `combine` command to combine the ground truths from the original
-round of analysis with the remediated predictions from this round. Ground truths and
-predictions will be matched up by document file name and field.
+Use the `combine` command to combine the ground truths from the original round of
+analysis with the remediated predictions from this round. Ground truths and predictions
+will be matched up by document filename and field.
 
 ~~~ shell
 groundtruth combine \
-    --ground-truths-file ground_truth_extractions.csv \
-    --predictions-file remediated_extractions.csv \
-    --extractions-file combined_extractions.csv
+    --ground-truths-file samples.csv \
+    --predictions-file remediations.csv \
+    --combined-file remediated_samples.csv
 ~~~
 
-Use the `analyze` command on the combined extractions CSV to calculate the remediated
+Use the `analyze` command on the remediated samples file to calculate the remediated
 performance metrics. This process can be repeated for as many rounds of remediation as
 necessary.
 
 Additional ground truth documents can be added to the set by submitting, reviewing,
-retrieving, and extracting them using a separate submission IDs CSV and extractions
-CSV. Afterwards, the submission IDs and extractions for the new documents can be merged
-into the original CSVs.
+retrieving, and extracting them using a separate submission IDs CSV and samples
+file. Afterwards, the submission IDs and samples for the new documents can be merged
+into the original samples file.
