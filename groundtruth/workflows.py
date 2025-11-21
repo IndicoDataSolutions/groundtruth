@@ -72,6 +72,15 @@ def retrieve_results(  # type: ignore[no-any-unimported]
             )
             continue
 
+        if submission.status == "FAILED":
+            rich.print(
+                "[yellow]"
+                f"Submission {submission_id} {file_name!r} failed. "
+                "Skipping."
+                "[/]"
+            )
+            continue
+
         result = client.call(RetrieveStorageObject(submission.result_file))
 
         sanitized_file_name = sanitize(file_name)
