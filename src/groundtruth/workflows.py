@@ -17,7 +17,7 @@ from .utils import sanitize
 logger = logging.getLogger(__name__)
 
 
-def submit_documents(  # type: ignore[no-any-unimported]
+def submit_documents(
     config: IndicoConfig,
     workflow_id: int,
     document_files: Iterable[Path],
@@ -30,7 +30,10 @@ def submit_documents(  # type: ignore[no-any-unimported]
     for document_file in document_files:
         if document_file.is_file():
             (submission_id,) = client.call(
-                WorkflowSubmission(workflow_id=workflow_id, files=[document_file])
+                WorkflowSubmission(
+                    workflow_id=workflow_id,
+                    files=[document_file],  # type: ignore[ty:invalid-argument-type]
+                )
             )
             yield submission_id
 
@@ -43,13 +46,15 @@ def submit_documents(  # type: ignore[no-any-unimported]
             )
             (submission_id,) = client.call(
                 WorkflowSubmission(
-                    workflow_id=workflow_id, files=bundle_files, bundle=True
+                    workflow_id=workflow_id,
+                    files=bundle_files,  # type: ignore[ty:invalid-argument-type]
+                    bundle=True,
                 )
             )
             yield submission_id
 
 
-def retrieve_results(  # type: ignore[no-any-unimported]
+def retrieve_results(
     config: IndicoConfig,
     results_folder: Path,
     submissions: Iterable[tuple[int, str]],
@@ -70,7 +75,7 @@ def retrieve_results(  # type: ignore[no-any-unimported]
                 f"Submission {submission_id} {file_name!r} has been deleted. "
                 "Skipping."
                 "[/]"
-            )
+            )  # fmt: skip
             continue
 
         if submission.status == "FAILED":
@@ -79,7 +84,7 @@ def retrieve_results(  # type: ignore[no-any-unimported]
                 f"Submission {submission_id} {file_name!r} failed. "
                 "Skipping."
                 "[/]"
-            )
+            )  # fmt: skip
             continue
 
         result = client.call(RetrieveStorageObject(submission.result_file))
@@ -90,7 +95,7 @@ def retrieve_results(  # type: ignore[no-any-unimported]
         result_file.write_text(json.dumps(result))
 
 
-def retry_failed_submissions(  # type: ignore[no-any-unimported]
+def retry_failed_submissions(
     config: IndicoConfig,
     submission_ids: Iterable[int],
 ) -> None:

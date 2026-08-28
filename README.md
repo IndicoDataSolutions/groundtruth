@@ -6,12 +6,11 @@ Ground Truth Analysis Tooling
   be outdated or contain bugs. The operations it performs are potentially destructive.
   Use at your own risk.**
 
-Requires Python ^3.10 and Poetry ^2.0
+Requires Python ^3.10 and UV ^0.11
 
 ``` shell
-$ poetry install
-$ poetry poe {format,check,test,all}
-$ poetry run groundtruth --help
+$ uv tool install https://github.com/IndicoDelivery/groundtruth.git
+$ groundtruth --help
 ```
 
 **CAVEATS:**
