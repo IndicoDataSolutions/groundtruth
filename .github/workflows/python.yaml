@@ -19,28 +19,28 @@ jobs:
     - name: Checkout Commit
       uses: actions/checkout@v4
 
-    - name: Install Poetry
-      run: pipx install "poetry>=2,<3"
+    - name: Install uv
+      run: pipx install "uv>=0.11,<1"
 
     - name: Install Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: "poetry"
+        cache: "uv"
 
     - name: Install Dependencies
       run: |
-        poetry env use ${{ matrix.python-version }}
-        poetry install
+        uv python pin ${{ matrix.python-version }}
+        uv sync
 
-    - name: Run Black
-      run: poetry poe black-check
+    - name: Run ruff
+      run: uv run poe ruff-check
 
-    - name: Run Ruff
-      run: poetry poe ruff-check
+    - name: Run ruff format
+      run: uv run poe ruff-format-check
 
-    - name: Run Mypy
-      run: poetry poe mypy
+    - name: Run ty
+      run: uv run poe ty
 
-    - name: Run Pytest
-      run: poetry poe pytest
+    - name: Run pytest
+      run: uv run poe pytest
