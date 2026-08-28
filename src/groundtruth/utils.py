@@ -93,7 +93,7 @@ def zip_match_longest(
         ]
         for left_value in left_values
     ]
-    matched_pair_indices = Munkres().compute(edit_distance_graph)
+    matched_pair_indices = Munkres().compute(edit_distance_graph)  # type: ignore[ty:invalid-argument-type]
 
     for left_index, right_index in matched_pair_indices:
         yield left[left_index], right[right_index]

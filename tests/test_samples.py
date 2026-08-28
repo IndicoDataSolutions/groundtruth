@@ -123,8 +123,8 @@ def default_extraction(
     confidence: float = 0,
 ) -> DocumentExtraction:
     return DocumentExtraction(
-        document=None,  # type: ignore[arg-type]
-        task=None,  # type: ignore[arg-type]
+        document=None,  # type: ignore[ty:invalid-argument-type]
+        task=None,  # type: ignore[ty:invalid-argument-type]
         review=review,
         label=label,
         confidences={label: confidence},
@@ -139,10 +139,18 @@ def default_extraction(
 
 def test_sample() -> None:
     auto_review = Review(
-        id=None, reviewer_id=None, notes=None, rejected=False, type=ReviewType.AUTO  # type: ignore[arg-type]
+        id=None,  # type: ignore[ty:invalid-argument-type]
+        reviewer_id=None,  # type: ignore[ty:invalid-argument-type]
+        notes=None,  # type: ignore[ty:invalid-argument-type]
+        rejected=False,
+        type=ReviewType.AUTO,
     )
     manual_review = Review(
-        id=None, reviewer_id=None, notes=None, rejected=False, type=ReviewType.MANUAL  # type: ignore[arg-type]
+        id=None,  # type: ignore[ty:invalid-argument-type]
+        reviewer_id=None,  # type: ignore[ty:invalid-argument-type]
+        notes=None,  # type: ignore[ty:invalid-argument-type]
+        rejected=False,
+        type=ReviewType.MANUAL,
     )
 
     result = Result(
